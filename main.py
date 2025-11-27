@@ -1,7 +1,12 @@
-from fastapi import FastAPI
+import uvicorn
+
+from controller import Controller
+
+FRONTEND_URL = "http://localhost:3000"  # URL frontend
 
 app = FastAPI()
+controller = Controller(FRONTEND_URL) #Creation du controleur à partir de l'adresse du front
 
-@app.get("/")
-def read_root():
-    return {"message": "Backend FastAPI prêt sur Windows !"}
+if __name__ == "__main__":
+    # Lance FastAPI via Uvicorn : crée une instance FastAPI controller.app, unicorn lance un serveur HTTP 127.0.0.1
+    uvicorn.run(controller.app, host="127.0.0.1", port=8000, reload=True)
