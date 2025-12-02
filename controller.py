@@ -1,18 +1,20 @@
 from fastapi import FastAPI
 import requests
 
-from Modele.DonneesType.irm import IRM
-from Modele.DonneesType.mrsi import MRSI
-from Modele.DonneesType.pds import PDS
+import Modele
+from Modele.DonneesTypes.irm import IRM
+from Modele.DonneesTypes.mrsi import MRSI
+from Modele.DonneesTypes.pds import PDS
 
 
 class Controller:
     """
         Contrôleur principal : interface entre frontEnd et Modèle.
     """
-    def __init__(self, frontend_url: str):
+    def __init__(self, frontend_url: str, app):
             self.frontend_url = frontend_url
-            self.setup_routes() #initialisation chemins avec front
+            self.app = app
+            self._setup_routes() #initialisation chemins avec front
 
     # ROUTES VERS LE FRONT
     def _setup_routes(self):
@@ -33,7 +35,7 @@ class Controller:
     # -----------------------------------------
 
 
-    @self.app.post("/upload-irm/{nom}")
+    #@self.app.post("/upload-irm/{nom}")
     def upload_irm(self, nom: str, fichier: str):
         irm = IRM(nom, fichier)
         irm.charger()
