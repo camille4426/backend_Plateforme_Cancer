@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 
-from controller import Controller
+from src.controller import Controller
 
 FRONTEND_URL = "http://localhost:3000"  # URL frontend
 

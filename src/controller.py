@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 import requests
 
-import Modele
-from Modele.DonneesTypes.irm import IRM
-from Modele.DonneesTypes.mrsi import MRSI
-from Modele.DonneesTypes.pds import PDS
+from src.Modele.modele import Modele
+from src.Modele.DonneesTypes.irm import IRM
+from src.Modele.DonneesTypes.mrsi import MRSI
+from src.Modele.DonneesTypes.pds import PDS
 
 
 class Controller:
@@ -38,7 +38,7 @@ class Controller:
     #@self.app.post("/upload-irm/{nom}")
     def upload_irm(self, nom: str, fichier: str):
         irm = IRM(nom, fichier)
-        irm.charger()
-        return irm.affichage_front()
+        #irm.charger()
+        return irm.summary()
         #return irm.summary()
 
