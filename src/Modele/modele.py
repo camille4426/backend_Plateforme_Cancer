@@ -14,7 +14,7 @@ class Modele:
 
     # Retourne les informations de la classe
     def summary(self, type: str):
-        logger.info(f"modele.py (summary) : Retourne le sommaire'")
+        logger.info(f"modele.py (summary) : Retourne le sommaire")
         return {"type": type, "nom_fichier": self.fichier.filename}
         #return {"type": type, "nom_fichier": self.fichier.filename, "fichier": self.fichier}
         #return écrit dans code 200 Response body 
