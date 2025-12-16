@@ -1,20 +1,22 @@
 from ..modele import Modele
 import nibabel as nib
 import numpy as np
+from fastapi import UploadFile, File
+
 
 """
     Classe pour les fichiers IRM
 """
 class IRM(Modele):
     # Initialisation de la classe
-    def __init__(self, nom: str, fichier_path: str):
-        super().__init__(nom, fichier_path)
+    def __init__(self, fichier: UploadFile):
+        super().__init__(fichier)
 
     #def affichage_front(self):
         # 
 
     # Retourne les informations de la classe
     def summary(self):
-        #super().summary()
-        #return écrit dans code 200 Response body 
-        return {"type": "IRM", "nom": self.nom, "fichier": self.fichier_path}
+        return super().summary("IRM")
+        
+    
