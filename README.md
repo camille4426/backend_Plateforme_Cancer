@@ -1,8 +1,8 @@
-A faire à l'intallation du projet :
+# A faire à l'intallation du projet :
 
 Se mettre dans src et : pip install -r requirements.txt
 
-Lancement de l'application :
+# Lancement de l'application :
 Dans backend/ :
 .\venv\Scripts\Activate.ps1
 uvicorn src.main.controller.app --reload
