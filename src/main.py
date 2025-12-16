@@ -1,5 +1,6 @@
 # src/main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 #import uvicorn
 
 from src.controller import Controller
@@ -11,6 +12,13 @@ from src.controller import Controller
 FRONTEND_URL = "http://localhost:3000"  # URL frontend
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000/", "http://127.0.0.1:3000/"],
+    allow_credentials=True,
+    allow_methods=[""],
+    allow_headers=[""],
+)
 controller = Controller(FRONTEND_URL, app) #Creation du controleur à partir de l'adresse du front
 
 
