@@ -3,10 +3,9 @@ from fastapi import FastAPI, UploadFile, File
 import requests
 
 from src.logger import get_logger
-from src.Modele.modele import Modele
-from src.Modele.DonneesTypes.irm import IRM
-from src.Modele.DonneesTypes.mrsi import MRSI
-from src.Modele.DonneesTypes.pds import PDS
+from src.Modele.irm import IRM
+from src.Modele.mrsi import MRSI
+from src.Modele.pds import PDS
 
 logger = get_logger(__name__)  # logger spécifique au module controller.py
 
