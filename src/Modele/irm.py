@@ -11,7 +11,8 @@ class IRM:
     def __init__(self, fichier: UploadFile):
         self.fichier = fichier #conservation du fichier
 
-    #def affichage_front(self):
+    def set_imgs_irm(self):
+        logger.info(f"A FAIRE : traitement fichier et retourner les images pour le Front")
         # 
 
     # Retourne les informations de la classe
