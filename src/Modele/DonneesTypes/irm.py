@@ -6,7 +6,7 @@ from src.logger import get_logger
 """
     Classe pour les fichiers IRM
 """
-class IRM(Modele):
+class IRM:
     # Initialisation de la classe
     def __init__(self, fichier: UploadFile):
         self.fichier = fichier #conservation du fichier
