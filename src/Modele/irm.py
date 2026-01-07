@@ -12,7 +12,7 @@ class IRM:
         self.fichier = fichier #conservation du fichier
 
     def set_imgs_irm(self):
-        logger.info(f"A FAIRE : traitement fichier et retourner les images pour le Front")
+        logger.warning(f"A FAIRE : traitement fichier et retourner les images pour le Front")
         # 
 
     # Retourne les informations de la classe
