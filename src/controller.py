@@ -45,8 +45,11 @@ class Controller:
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
         irm = IRM(fichier)
-        #irm.charger()
-        summary = irm.summary()
-        logger.info(f"controller.py (upload_irm) : Traitement IRM terminé - Retoune : '{summary}'")
-        return summary
+
+        # AU LIEU de summary seul:
+        payload = irm.set_imgs_irm()
+
+        logger.info("controller.py (upload_irm) : Traitement IRM terminé")
+        return payload
+
 

@@ -1,15 +1,130 @@
-import nibabel as nib
+import os
+import tempfile
 import numpy as np
+import nibabel as nib
+from fastapi import UploadFile
+from src.logger import get_logger
+
+logger = get_logger(__name__)
 
 class MRSI:
-    # Initialisation de la classe
+    """
+    Classe pour fichiers MRSI (.nii).
+    Objectif:
+      - renvoyer une "carte voxels" (résumé d'intensité)
+      - renvoyer un spectre pour un voxel donné
+    """
+
     def __init__(self, nom: str, fichier: UploadFile):
-        self.fichier = fichier #conservation du fichier
+        self.nom = nom
+        self.fichier = fichier
+        self.img = None
+        self.data = None  # numpy array
 
-    #def affichage_front(self):
-        # 
+    def _save_upload_to_temp(self) -> str:
+        suffix = ".nii"
+        if self.fichier.filename and self.fichier.filename.lower().endswith(".nii.gz"):
+            suffix = ".nii.gz"
 
-    # Retourne les informations de la classe
+        try:
+            self.fichier.file.seek(0)
+        except Exception:
+            pass
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(self.fichier.file.read())
+            return tmp.name
+
+    def load(self):
+        tmp_path = self._save_upload_to_temp()
+        try:
+            self.img = nib.load(tmp_path)  # :contentReference[oaicite:6]{index=6}
+            self.data = self.img.get_fdata()  # :contentReference[oaicite:7]{index=7}
+            logger.info(f"MRSI chargée: shape={self.data.shape}, dtype={self.data.dtype}")
+        finally:
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+    def voxel_map(self, z=None, method="sum_abs"):
+        """
+        Construit une carte MRSI à partir des spectres.
+
+        - data shape attendue: (16,16,8,512)
+        - z optionnel: renvoie une coupe 2D (16x16)
+        """
+
+        if self.data is None:
+            self.load()
+
+        d = self.data
+
+        if d.ndim != 4:
+            return {
+                "error": f"MRSI attendue en 4D (X,Y,Z,T). Reçu ndim={d.ndim}",
+                "shape": list(d.shape),
+            }
+
+        # ---- Calcul voxel map 3D ----
+        if method == "max_abs":
+            vm = np.max(np.abs(d), axis=-1)   # (16,16,8)
+        elif method == "sum":
+            vm = np.sum(d, axis=-1)
+        else:  # sum_abs par défaut
+            vm = np.sum(np.abs(d), axis=-1)
+
+        # ---- Si on veut une coupe 2D ----
+        if z is not None:
+            z = int(z)
+            vm2d = vm[:, :, z]   # (16,16)
+            return {
+                "type": "MRSI",
+                "nom": self.nom,
+                "z": z,
+                "voxel_map_2d": vm2d.tolist(),
+                "shape": list(vm2d.shape),
+                "method": method
+            }
+
+        # ---- Sinon on renvoie la map 3D ----
+        return {
+            "type": "MRSI",
+            "nom": self.nom,
+            "voxel_map_3d": vm.tolist(),
+            "shape": list(vm.shape),
+            "method": method
+        }
+
+
+    def spectrum(self, x: int, y: int, z: int):
+        """
+        Renvoie le spectre 1D du voxel (x,y,z) si data est 4D (X,Y,Z,T).
+        """
+        if self.data is None:
+            self.load()
+        if self.data is None:
+            return {"error": "Impossible de charger la MRSI"}
+
+        d = self.data
+        if d.ndim != 4:
+            return {"error": f"Spectre voxel nécessite une MRSI 4D (X,Y,Z,T). Reçu ndim={d.ndim}", "shape": list(d.shape)}
+
+        X, Y, Z, T = d.shape
+        if not (0 <= x < X and 0 <= y < Y and 0 <= z < Z):
+            return {"error": "Indices voxel hors limites", "shape": [int(X), int(Y), int(Z), int(T)]}
+
+        sp = d[int(x), int(y), int(z), :]
+        # JSON-friendly
+        return {
+            "type": "MRSI",
+            "nom": self.nom,
+            "voxel": {"x": int(x), "y": int(y), "z": int(z)},
+            "T": int(T),
+            "spectrum": sp.tolist(),
+        }
+        
+
     def summary(self):
-        #shape = self.data.shape if self.data is not None else None
+        shape = self.data.shape if self.data is not None else None
         return {"type": "MRSI", "nom": self.nom, "shape": shape}

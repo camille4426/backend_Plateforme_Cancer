@@ -1,6 +1,8 @@
 import nibabel as nib
 import numpy as np
 from src.logger import get_logger
+from fastapi import UploadFile
+
 
 class PDS:
     # Initialisation de la classe
@@ -12,5 +14,5 @@ class PDS:
 
     # Retourne les informations de la classe
     def summary(self):
-        #shape = self.data.shape if self.data is not None else None
+        shape = self.data.shape if self.data is not None else None
         return {"type": "PDS", "nom": self.nom, "shape": shape}
