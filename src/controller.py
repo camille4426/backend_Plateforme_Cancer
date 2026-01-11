@@ -12,11 +12,13 @@ class Controller:
     """
         Contrôleur principal : interface entre frontEnd et Modèle.
     """
+class Controller:
     def __init__(self, frontend_url: str, app):
-            self.frontend_url = frontend_url
-            self.app = app
-            logger.info("controller.py : Controleur initialisé")
-            self._setup_routes() #initialisation chemins avec front
+        self.frontend_url = frontend_url
+        self.app = app
+        logger.info("controller.py : Controleur initialisé")
+        self._last_mrsi = None 
+        self._setup_routes()
 
     # ROUTES VERS LE FRONT
     def _setup_routes(self):
@@ -51,11 +53,9 @@ class Controller:
 
     def upload_mrsi(self, fichier: UploadFile):
         logger.debug("controller.py : Démarrage traitement MRSI")
-
         mrsi = MRSI(fichier.filename, fichier)
-
         voxel_map = mrsi.voxel_map(z=4)   # coupe centrale par défaut
-
+        self._last_mrsi = mrsi
         logger.info("controller.py : Traitement MRSI terminé")
         return voxel_map
 
