@@ -2,7 +2,7 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
-from controller import Controller
+from src.controller import Controller
 
 # -----------------------------------------
 # Initialisation FastAPI + Controller
@@ -15,7 +15,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
+        FRONTEND_URL,
         "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
@@ -34,17 +34,27 @@ def root():
 
 @app.post("/upload-irm/")
 async def upload_irm(fichier: UploadFile = File(...)):
-    # renvoie les coupes IRM (axial/coronal/sagittal) + shape
-    return controller.upload_irm(fichier)
+    try:
+        # renvoie les coupes IRM (axial/coronal/sagittal) + shape
+        return controller.upload_irm(fichier)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
 @app.post("/upload-mrsi/")
 async def upload_mrsi(fichier: UploadFile = File(...)):
-    # renvoie la voxel-map MRSI (ex: coupe z centrale) selon controller.upload_mrsi
-    return controller.upload_mrsi(fichier)
+    try:
+        # renvoie la voxel-map MRSI complète pour la navigation 3D
+        return controller.upload_mrsi(fichier)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
-# (Optionnel) si tu as ajouté controller.get_mrsi_spectrum(x,y,z)
-@app.get("/mrsi-spectrum/")
-def mrsi_spectrum(x: int, y: int, z: int):
+# Route pour obtenir un spectre MRSI spécifique (utilisée par le frontend)
+@app.get("/spectrum/{x}/{y}/{z}")
+async def get_spectrum(x: int, y: int, z: int):
     return controller.get_mrsi_spectrum(x, y, z)
 
 
