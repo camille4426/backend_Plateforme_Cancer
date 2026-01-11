@@ -33,7 +33,20 @@ class Controller:
         async def upload_irm(fichier: UploadFile = File(...)): #async car l'upload de fichiers induit une attente, donc async pour pas bloquer
             #contenu = await fichier.read() # lecture fichier en bytes
             logger.info(f"controller.py : Requête fichier IRM reçue - fichier '{fichier.filename}'")
-            return self.upload_irm(fichier)
+            return self.upload_irm_method(fichier)
+
+        # Route pour MRSI
+        @self.app.post("/upload-mrsi/")
+        async def upload_mrsi(fichier: UploadFile = File(...)):
+            logger.info(f"controller.py : Requête fichier MRSI reçue - fichier '{fichier.filename}'")
+            return self.upload_mrsi_data(fichier)
+
+        # Route pour obtenir un spectre MRSI spécifique
+        @self.app.get("/spectrum/{x}/{y}/{z}")
+        async def get_spectrum(x: int, y: int, z: int):
+            if not self.last_mrsi:
+                return {"error": "Aucun fichier MRSI chargé"}
+            return self.last_mrsi.get_spectrum(x, y, z)
 
     # -----------------------------------------
 
@@ -43,7 +56,8 @@ class Controller:
 
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
-        irm = IRM(fichier)
+        self.last_irm = IRM(fichier)
+        self.last_irm.load()
 
         payload = irm.set_imgs_irm()
 

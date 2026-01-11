@@ -47,6 +47,17 @@ class MRSI:
             except Exception:
                 pass
 
+    def _to_uint8_slice(self, sl: np.ndarray) -> np.ndarray:
+        """
+        Normalise une coupe 2D en uint8 [0..255].
+        """
+        sl = np.asarray(sl, dtype=np.float32)
+        vmin, vmax = np.nanmin(sl), np.nanmax(sl)
+        if vmin == vmax:
+            return np.zeros_like(sl, dtype=np.uint8)
+        out = (sl - vmin) / (vmax - vmin)
+        return (out * 255).astype(np.uint8)
+
     def voxel_map(self, z=None, method="sum_abs"):
         """
         Construit une carte MRSI à partir des spectres.
@@ -78,24 +89,55 @@ class MRSI:
         if z is not None:
             z = int(z)
             vm2d = vm[:, :, z]   # (16,16)
+            vm2d_norm = self._to_uint8_slice(vm2d)
             return {
                 "type": "MRSI",
                 "nom": self.nom,
                 "z": z,
-                "voxel_map_2d": vm2d.tolist(),
+                "voxel_map_2d": vm2d_norm.tolist(),
                 "shape": list(vm2d.shape),
                 "method": method
             }
 
-        # ---- Sinon on renvoie la map 3D ----
+        # ---- Sinon on renvoie toutes les coupes pour la slider navigation ----
+    def get_all_voxel_maps(self, method="sum_abs"):
+        """
+        Renvoie TOUTES les coupes de la voxel map.
+        """
+        if self.data is None:
+            self.load()
+        
+        d = self.data
+        if d.ndim != 4:
+            return {"error": "MRSI non 4D"}
+
+        if method == "max_abs":
+            vm = np.max(np.abs(d), axis=-1)
+        elif method == "sum":
+            vm = np.sum(d, axis=-1)
+        else:
+            vm = np.sum(np.abs(d), axis=-1)
+
+        X, Y, Z = vm.shape
+        slices = []
+        for i in range(Z):
+            slices.append(self._to_uint8_slice(vm[:, :, i]).tolist())
+
         return {
             "type": "MRSI",
             "nom": self.nom,
-            "voxel_map_3d": vm.tolist(),
-            "shape": list(vm.shape),
+            "voxel_map_all": slices,
+            "shape": [int(X), int(Y), int(Z)],
             "method": method
         }
 
+
+    def get_spectrum(self, x: int, y: int, z: int):
+        """
+        Renvoie le spectre 1D du voxel (x,y,z).
+        Alias de spectrum() pour correspondre à la demande.
+        """
+        return self.spectrum(x, y, z)
 
     def spectrum(self, x: int, y: int, z: int):
         """

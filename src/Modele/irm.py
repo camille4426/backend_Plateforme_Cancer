@@ -121,6 +121,50 @@ class IRM:
             "center": {"x": int(cx), "y": int(cy), "z": int(cz)},
         }
 
+    def get_all_slices(self):
+        """
+        Renvoie TOUTES les coupes (sagittales, coronales, axiales) normalisées en uint8.
+        """
+        if self.data is None:
+            self.load()
+
+        if self.data is None:
+            return {"error": "Impossible de charger l'IRM"}
+
+        vol = self.data
+        if vol.ndim == 4 and vol.shape[-1] > 1:
+            vol = vol[..., 0]
+
+        X, Y, Z = vol.shape
+
+        # On normalise le volume complet pour garder une cohérence de contraste entre les coupes
+        vmin, vmax = np.nanmin(vol), np.nanmax(vol)
+        if vmin == vmax:
+            norm_vol = np.zeros_like(vol, dtype=np.uint8)
+        else:
+            norm_vol = (vol - vmin) / (vmax - vmin)
+            norm_vol = (norm_vol * 255).astype(np.uint8)
+
+        # On prépare les listes pour le JSON
+        # Sagittal: X stacks of (Y, Z)
+        # Coronal: Y stacks of (X, Z)
+        # Axial: Z stacks of (X, Y)
+        
+        slices_sag = [norm_vol[i, :, :].tolist() for i in range(X)]
+        slices_cor = [norm_vol[:, i, :].tolist() for i in range(Y)]
+        slices_axi = [norm_vol[:, :, i].tolist() for i in range(Z)]
+
+        return {
+            "type": "IRM",
+            "nom_fichier": self.fichier.filename,
+            "shape": [int(X), int(Y), int(Z)],
+            "volumes": {
+                "sagittal": slices_sag,
+                "coronal": slices_cor,
+                "axial": slices_axi,
+            }
+        }
+
     def summary(self):
         logger.info("irm.py (summary) : Retourne le sommaire")
         return {"type": "IRM", "nom_fichier": self.fichier.filename}
