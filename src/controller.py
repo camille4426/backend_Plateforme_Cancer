@@ -1,11 +1,10 @@
 # src/controller.py
-from fastapi import FastAPI, UploadFile, File
-import requests
+from fastapi import File
+from fastapi import UploadFile
 
 from src.logger import get_logger
 from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
-from src.Modele.pds import PDS
 
 logger = get_logger(__name__)  # logger spécifique au module controller.py
 
@@ -40,16 +39,28 @@ class Controller:
     #   Méthodes pour modele
     # -----------------------------------------
 
-
-    #@self.app.post("/upload-irm/")
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
         irm = IRM(fichier)
 
-        # AU LIEU de summary seul:
         payload = irm.set_imgs_irm()
 
         logger.info("controller.py (upload_irm) : Traitement IRM terminé")
         return payload
 
 
+    def upload_mrsi(self, fichier: UploadFile):
+        logger.debug("controller.py : Démarrage traitement MRSI")
+
+        mrsi = MRSI(fichier.filename, fichier)
+
+        voxel_map = mrsi.voxel_map(z=4)   # coupe centrale par défaut
+
+        logger.info("controller.py : Traitement MRSI terminé")
+        return voxel_map
+
+
+    def get_mrsi_spectrum(self, x: int, y: int, z: int):
+        if self._last_mrsi is None:
+            return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
+        return self._last_mrsi.spectrum(x, y, z)
