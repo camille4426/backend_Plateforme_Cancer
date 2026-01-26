@@ -1,0 +1,115 @@
+{
+  "rootFolder": "Dataset_Medical",
+  "files": [
+    {
+      "name": "MsrGB01_PUI_20110324_0000.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110324_0000.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20110324_0001.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110324_0001.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20110324_0002.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110324_0002.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20110324_0003.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110324_0003.nii.gz"
+    },
+
+    {
+      "name": "MsrGB01_PUI_20110805_0000.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110805_0000.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20110805_0001.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110805_0001.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20110805_0002.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110805_0002.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20110805_0003.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20110805_0003.nii.gz"
+    },
+
+    {
+      "name": "MsrGB01_PUI_20111006_0000.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20111006_0000.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20111006_0001.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20111006_0001.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20111006_0002.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20111006_0002.nii.gz"
+    },
+    {
+      "name": "MsrGB01_PUI_20111006_0003.nii.gz",
+      "relativePath": "MRI/MsrGB01_PUI_20111006_0003.nii.gz"
+    },
+
+    {
+      "name": "MsrGB02_DAS_20110317_0000.nii.gz",
+      "relativePath": "MRI/MsrGB02_DAS_20110317_0000.nii.gz"
+    },
+    {
+      "name": "MsrGB02_DAS_20110317_0001.nii.gz",
+      "relativePath": "MRI/MsrGB02_DAS_20110317_0001.nii.gz"
+    },
+    {
+      "name": "MsrGB02_DAS_20110317_0002.nii.gz",
+      "relativePath": "MRI/MsrGB02_DAS_20110317_0002.nii.gz"
+    },
+    {
+      "name": "MsrGB02_DAS_20110317_0003.nii.gz",
+      "relativePath": "MRI/MsrGB02_DAS_20110317_0003.nii.gz"
+    },
+
+    {
+      "name": "MsrGB03_COU_20110304_0000.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110304_0000.nii.gz"
+    },
+    {
+      "name": "MsrGB03_COU_20110304_0001.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110304_0001.nii.gz"
+    },
+    {
+      "name": "MsrGB03_COU_20110304_0002.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110304_0002.nii.gz"
+    },
+    {
+      "name": "MsrGB03_COU_20110304_0003.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110304_0003.nii.gz"
+    },
+
+    {
+      "name": "MsrGB03_COU_20110325_0000.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110325_0000.nii.gz"
+    },
+    {
+      "name": "MsrGB03_COU_20110325_0001.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110325_0001.nii.gz"
+    },
+    {
+      "name": "MsrGB03_COU_20110325_0002.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110325_0002.nii.gz"
+    },
+    {
+      "name": "MsrGB03_COU_20110325_0003.nii.gz",
+      "relativePath": "MRI/MsrGB03_COU_20110325_0003.nii.gz"
+    },
+
+    {
+      "name": "MsrGB_MRSI_01_PUI_20110324_hsvd_atlas.nii",
+      "relativePath": "MRSI/MsrGB_MRSI_01_PUI_20110324_hsvd_atlas.nii"
+    },
+    {
+      "name": "MsrGB_MRSI_03_COU_20110325_hsvd_atlas.nii",
+      "relativePath": "MRSI/MsrGB_MRSI_03_COU_20110325_hsvd_atlas.nii"
+    }
+  ]
+}

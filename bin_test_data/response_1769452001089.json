@@ -1,0 +1,178 @@
+{
+  "patients": [
+    {
+      "patientId": "01_PUI",
+      "analyses": [
+        {
+          "date": "20110324",
+          "files": [
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110324_0000.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110324_0001.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1C"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110324_0002.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T2"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110324_0003.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "Flair"
+            },
+            {
+              "relative_path": "MRSI/MsrGB_MRSI_01_PUI_20110324_hsvd_atlas.nii",
+              "type_analyse": "MRSI"
+            }
+          ]
+        },
+        {
+          "date": "20110805",
+          "files": [
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110805_0000.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110805_0001.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1C"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110805_0002.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T2"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20110805_0003.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "Flair"
+            }
+          ]
+        },
+        {
+          "date": "20111006",
+          "files": [
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20111006_0000.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20111006_0001.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1C"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20111006_0002.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T2"
+            },
+            {
+              "relative_path": "MRI/MsrGB01_PUI_20111006_0003.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "Flair"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "patientId": "02_DAS",
+      "analyses": [
+        {
+          "date": "20110317",
+          "files": [
+            {
+              "relative_path": "MRI/MsrGB02_DAS_20110317_0000.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1"
+            },
+            {
+              "relative_path": "MRI/MsrGB02_DAS_20110317_0001.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1C"
+            },
+            {
+              "relative_path": "MRI/MsrGB02_DAS_20110317_0002.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T2"
+            },
+            {
+              "relative_path": "MRI/MsrGB02_DAS_20110317_0003.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "Flair"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "patientId": "03_COU",
+      "analyses": [
+        {
+          "date": "20110304",
+          "files": [
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110304_0000.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1"
+            },
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110304_0001.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1C"
+            },
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110304_0002.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T2"
+            },
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110304_0003.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "Flair"
+            }
+          ]
+        },
+        {
+          "date": "20110325",
+          "files": [
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110325_0000.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1"
+            },
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110325_0001.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T1C"
+            },
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110325_0002.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "T2"
+            },
+            {
+              "relative_path": "MRI/MsrGB03_COU_20110325_0003.nii.gz",
+              "type_analyse": "IRM",
+              "modalites_IRM": "Flair"
+            },
+            {
+              "relative_path": "MRSI/MsrGB_MRSI_03_COU_20110325_hsvd_atlas.nii",
+              "type_analyse": "MRSI"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "fichiers_non_reconnus": []
+}

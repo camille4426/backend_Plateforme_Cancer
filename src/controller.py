@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from src.logger import get_logger
 from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
+from src.Patients.patient import organize_files_by_patient
 
 logger = get_logger(__name__)  # logger spécifique au module controller.py
 
@@ -19,7 +20,23 @@ class Controller:
     # -----------------------------------------
 
     # -----------------------------------------
-    #   Méthodes pour modele
+    #   Méthodes pour organisation fichiers par patient
+    # -----------------------------------------
+    def get_json_by_patient(self, json_data: dict):
+        """
+        Reçoit le JSON du front et renvoie le JSON ordonné par patient et par date.
+        """
+        logger.info("controller.py : Traitement JSON dataset patients")
+        try:
+            output_json = organize_files_by_patient(json_data)
+            logger.info("controller.py : JSON dataset patients traité avec succès")
+            return output_json
+        except Exception as e:
+            logger.error(f"controller.py : Erreur traitement JSON - {e}")
+            raise e
+
+    # -----------------------------------------
+    #   Méthodes pour modele (traitement données IRM / MRSI)
     # -----------------------------------------
 
     def upload_irm(self, fichier: UploadFile):

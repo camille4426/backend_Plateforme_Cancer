@@ -1,6 +1,7 @@
 # src/main.py
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Body
 
 from src.controller import Controller
 
@@ -57,6 +58,16 @@ async def upload_mrsi(fichier: UploadFile = File(...)):
 async def get_spectrum(x: int, y: int, z: int):
     return controller.get_mrsi_spectrum(x, y, z)
 
+# Route pour l'échange de JSONs dataset patients
+@app.post("/upload-json-dataset/")
+async def upload_json_dataset(json_data: dict = Body(...)):
+    try:
+        output_json = controller.get_json_by_patient(json_data)
+        return output_json
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
 
 # -----------------------------------------
