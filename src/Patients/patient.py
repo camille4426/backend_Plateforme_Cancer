@@ -87,7 +87,8 @@ def organize_files_by_patient(input_json: dict) -> dict:
 
         for date in sorted(patients_dict[patient_id].keys()):
             analysis = {
-                "date": date,
+                #"date": date, 
+                "date": f"{date[0:4]}/{date[4:6]}/{date[6:8]}",
                 "files": patients_dict[patient_id][date]  # liste de dicts file_info
             }
             patient_data["analyses"].append(analysis)
