@@ -150,19 +150,15 @@ class IRM:
         # Coronal: Y stacks of (X, Z)
         # Axial: Z stacks of (X, Y)
         
-        slices_sag = [norm_vol[i, :, :].tolist() for i in range(X)]
-        slices_cor = [norm_vol[:, i, :].tolist() for i in range(Y)]
-        slices_axi = [norm_vol[:, :, i].tolist() for i in range(Z)]
-
+        # Optimization: Return just the 3D volume. Frontend handles slicing.
+        # norm_vol shape is (X, Y, Z).
+        # tolist() creates a nested list structure: [X][Y][Z]
+        
         return {
             "type": "IRM",
             "nom_fichier": self.fichier.filename,
             "shape": [int(X), int(Y), int(Z)],
-            "volumes": {
-                "sagittal": slices_sag,
-                "coronal": slices_cor,
-                "axial": slices_axi,
-            }
+            "data": norm_vol.tolist() # Single source of truth
         }
 
     def summary(self):
