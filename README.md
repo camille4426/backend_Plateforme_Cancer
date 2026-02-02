@@ -1,18 +1,19 @@
 # A faire à l'intallation du projet :
 
 Création environnement virtuel à la source backend\ : 
+```bash
 python -m venv venv
 venv\Scripts\activate
-
-
-Se mettre dans src et : pip install -r requirements.txt
+cd ./src
+pip install -r requirements.txt
+```
 
 # Lancement de l'application :
 Dans backend/ :
-
-.\venv\Scripts\Activate.ps1
-
+```bash
+venv\Scripts\activate
 uvicorn src.main:controller.app --reload
+```
 
 => Note : Une fois le serveur lancé, les logs s'actualisent automatiquement à chaque Ctrl + S
 
