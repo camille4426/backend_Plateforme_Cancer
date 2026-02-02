@@ -86,6 +86,7 @@ class Controller:
             instance = self.last_irm.get(name) or self.last_mrsi.get(name) #l'instance du fichier concerné
             
             if instance == None:
+                logger.info(f"controller.py : test_fft : fichier non trouvé '{name}'")
                 result[name] = {"error": "IRM/MRSI non trouvée. Vous essayez de faire un traitement sur un fichier jamais upload"}
                 continue
             
@@ -95,4 +96,3 @@ class Controller:
 
         logger.info("controller.py : Post Traitement test_Fourier terminé")
         return result
-
