@@ -1,8 +1,8 @@
 # A faire à l'intallation du projet :
 
 Création environnement virtuel à la source backend\ : 
-python -m venv venv
-venv\Scripts\activate
+'python -m venv venv
+venv\Scripts\activate'
 
 
 Se mettre dans src et : pip install -r requirements.txt
