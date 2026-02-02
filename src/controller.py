@@ -5,6 +5,7 @@ from fastapi import UploadFile
 from src.logger import get_logger
 from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
+from src.Modele.Traitement.test_Fourier import TEST_FOURIER
 from src.Patients.patient import organize_files_by_patient
 
 logger = get_logger(__name__)  # logger spécifique au module controller.py
@@ -14,8 +15,13 @@ class Controller:
         self.frontend_url = frontend_url
         self.app = app
         logger.info("controller.py : Controleur initialisé")
-        self.last_irm = None 
-        self.last_mrsi = None
+        
+        self.last_irm = {} 
+        self.last_mrsi = {}
+        # = Dictionnaires de toutes les irms et mrsi utilisées pendant la session courante 
+        # clé = nom du fichier, valeur = classe IRM ou MRSI correspondante
+        
+        
 
     # -----------------------------------------
 
@@ -36,23 +42,25 @@ class Controller:
             raise e
 
     # -----------------------------------------
-    #   Méthodes pour modele (traitement données IRM / MRSI)
+    #   Méthodes pour upload les fichiers (traitement données IRM / MRSI)
     # -----------------------------------------
 
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
-        self.last_irm = IRM(fichier)
+        self.last_irm[fichier.filename] = IRM(fichier)
+        
         # load() est appelé automatiquement par get_all_slices si data est None
-        payload = self.last_irm.get_all_slices()
+        payload = self.last_irm[fichier.filename].get_all_slices()
+
         logger.info("controller.py (upload_irm) : Traitement IRM terminé")
         return payload
 
 
     def upload_mrsi(self, fichier: UploadFile):
         logger.debug("controller.py : Démarrage traitement MRSI")
-        self.last_mrsi = MRSI(fichier.filename, fichier)
+        self.last_mrsi[fichier.filename] = MRSI(fichier.filename, fichier)
         # On renvoie toutes les coupes pour la navigation 3D
-        payload = self.last_mrsi.get_all_voxel_maps()
+        payload = self.last_mrsi[fichier.filename].get_all_voxel_maps()
         logger.info("controller.py : Traitement MRSI terminé")
         return payload
 
@@ -62,3 +70,29 @@ class Controller:
         if self.last_mrsi is None:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
         return self.last_mrsi.spectrum(x, y, z)
+    
+    # -----------------------------------------
+    #   Méthodes pour le post-traitement
+    # -----------------------------------------
+    def test_fft(self, filenames: list):
+        """
+        filenames : liste des noms de fichiers IRM ou MRSI à traiter
+        """
+        logger.debug("controller.py : Début Post Traitement test_Fourier")
+
+        result = {}
+
+        for name in filenames:
+            instance = self.last_irm.get(name) or self.last_mrsi.get(name) #l'instance du fichier concerné
+            
+            if instance == None:
+                result[name] = {"error": "IRM/MRSI non trouvée. Vous essayez de faire un traitement sur un fichier jamais upload"}
+                continue
+            
+            traitement_fft = TEST_FOURIER(instance)
+
+            result[name] = traitement_fft.creer_fonction_dans_test_Fourier()
+
+        logger.info("controller.py : Post Traitement test_Fourier terminé")
+        return result
+

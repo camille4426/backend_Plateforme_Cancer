@@ -77,7 +77,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 
 # -----------------------------------------
-# Routes
+# Upload Routes
 # -----------------------------------------
 @app.get("/")
 def root():
@@ -121,6 +121,18 @@ async def upload_json_dataset(
 ):
     try:
         return controller.get_json_by_patient(json_data)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+# -----------------------------------------
+# Traitement Routes
+# -----------------------------------------
+@app.post("/traitement/test_fft/")
+async def test_fft(filenames: list[str] = Body(...)):
+    try:
+        return controller.test_fft(filenames)
     except Exception as e:
         import traceback
         traceback.print_exc()
