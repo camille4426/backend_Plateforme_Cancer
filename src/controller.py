@@ -92,7 +92,7 @@ class Controller:
             
             traitement_fft = TEST_FOURIER(instance)
 
-            result[name] = traitement_fft.creer_fonction_dans_test_Fourier()
+            result[name] = traitement_fft.get_fft()
 
         logger.info("controller.py : Post Traitement test_Fourier terminé")
         return result
