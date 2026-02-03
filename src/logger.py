@@ -23,8 +23,8 @@ def get_logger(name: str):
 
     logger = colorlog.getLogger(name) # Pour ajout de nos propres logs
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    #logger.setLevel(logging.DEBUG) #Utiliser cette ligne à la place de celle au dessus pour voir les debugs aussi.
+    #logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG) #Utiliser cette ligne à la place de celle au dessus pour voir les debugs aussi.
     logger.propagate = False  # <-- important pour éviter l'affichage Message: ... Arguments: ()
 
     # On récupère les logs donnés par uvicorn:

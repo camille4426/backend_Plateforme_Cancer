@@ -78,11 +78,14 @@ class Controller:
         """
         filenames : liste des noms de fichiers IRM ou MRSI à traiter
         """
-        logger.debug("controller.py : Début Post Traitement test_Fourier")
+        logger.debug(f"controller.py : Début Post Traitement test_Fourier, fichiers : '{filenames}'")
+        logger.debug(f"controller.py : test_fft, fichiers irm dispos : '{self.last_irm}'")
+        logger.debug(f"controller.py : test_fft, fichiers mrsi dispos : '{self.last_mrsi}'")
 
         result = {}
 
         for name in filenames:
+            instance = None
             instance = self.last_irm.get(name) or self.last_mrsi.get(name) #l'instance du fichier concerné
             
             if instance == None:
