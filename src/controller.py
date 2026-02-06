@@ -55,9 +55,13 @@ class Controller:
 
     def get_mrsi_spectrum(self, x: int, y: int, z: int):
         logger.debug("controller.py : Démarrage traitement MRSI spectre")
-        if self.last_mrsi is None:
+        if not self.last_mrsi:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
-        return self.last_mrsi.spectrum(x, y, z)
+        
+        
+        filename = list(self.last_mrsi.keys())[-1]
+        return self.last_mrsi[filename].spectrum(x, y, z)
+
     
     # -----------------------------------------
     #   Méthodes pour le post-traitement
@@ -110,13 +114,21 @@ class Controller:
                 result[name] = {"error": f"Type de traitement inconnu : {type_traitement}"}
                 continue
 
-            if type_traitement is "metabolite_extractor" and isinstance(instance, IRM):
+            if type_traitement == "metabolite_extractor" and isinstance(instance, IRM):
                 result[name] = {"error": f"Type de traitement non compatible : une extraction de métabolites se fait uniquement sur MRSI"}
                 continue
 
             params = contenu.get("params", {})
 
-            traitement = classe(instance)
+            if type_traitement == "metabolite_extractor":
+                # Try to pass an MRI instance for resampling
+                irm_instance = None
+                if self.last_irm:
+                    irm_instance = list(self.last_irm.values())[-1]
+                traitement = classe(instance, irm_instance=irm_instance)
+            else:
+                traitement = classe(instance)
+
             result[name] = traitement.run(**params)                   
 
         logger.info("controller.py : upload_traitements : traitement terminé")

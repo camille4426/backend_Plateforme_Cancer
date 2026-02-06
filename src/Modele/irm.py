@@ -145,7 +145,9 @@ class IRM:
             "type": "IRM",
             "nom_fichier": self.fichier.filename,
             "shape": [int(X), int(Y), int(Z)],
-            "data": norm_vol.tolist()
+            "data": norm_vol.tolist(),
+            "affine": [ [float(v) for v in row] for row in self.img.affine ] if self.img is not None else None,
+            "spacing": [float(x) for x in self.img.header.get_zooms()[:3]] if self.img is not None else None
         }
 
     def summary(self):

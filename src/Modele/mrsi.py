@@ -127,7 +127,9 @@ class MRSI:
             "nom": self.nom,
             "voxel_map_all": slices,
             "shape": [int(X), int(Y), int(Z)],
-            "method": method
+            "method": method,
+            "affine": [ [float(v) for v in row] for row in self.img.affine ] if self.img is not None else None,
+            "spacing": [float(x) for x in self.img.header.get_zooms()[:3]] if self.img is not None else None
         }
 
 
