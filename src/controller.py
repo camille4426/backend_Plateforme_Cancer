@@ -69,9 +69,12 @@ class Controller:
         logger.debug("controller.py : Démarrage traitement MRSI spectre")
         if not self.last_mrsi:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
-        # Get the most recently uploaded MRSI (last item in dict)
-        last_mrsi_instance = list(self.last_mrsi.values())[-1]
-        return last_mrsi_instance.spectrum(x, y, z)
+        try:
+            # Get the most recently uploaded MRSI (last item in dict)
+            last_mrsi_instance = list(self.last_mrsi.values())[-1]
+            return last_mrsi_instance.spectrum(x, y, z)
+        except (IndexError, KeyError):
+            return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
     
     # -----------------------------------------
     #   Méthodes pour le post-traitement
