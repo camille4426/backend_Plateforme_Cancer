@@ -43,7 +43,7 @@ class TRAITEMENT_FFT:
             base_name = self._basename_no_ext(self.data_dico["nom_fichier"])
             return {
             "type": "IRM",
-            "traitement" : nom_filtre,
+            "type_traitement" : nom_filtre,
             "nom_fichier": base_name + nom_filtre,
             "shape": shape,
             "data": data
@@ -64,7 +64,7 @@ class TRAITEMENT_FFT:
                 voxel_map_all.append(filtered_volume[:, :, z].tolist())
             return {
             "type": "MRSI",
-            "traitement" : nom_filtre,
+            "type_traitement" : nom_filtre,
             "nom": base_name + nom_filtre,
             "voxel_map_all": voxel_map_all,
             "shape": shape,

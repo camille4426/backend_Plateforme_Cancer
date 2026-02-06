@@ -9,17 +9,28 @@ class METABOLITE_EXTRACTOR:
     Extraction de métabolites voxel par voxel à partir d'une MRSI.
     Retourne des cartes 3D normalisées pour affichage front.
     """
-    METABOLITES_RANGES = {
-            "NAA": (10, 20),
-            "Cr": (25, 35),
-            "Cho": (40, 50)
+    METABOLITES_VALEURS = { 
+            "NAA": 2.01,
+            "Cr": 3.02,
+            "Cho": 3.22
     }
+    # Valeurs réelles métabolites (obtenues diapo 2 ref 5) :
+    #  NAA = 2.01 ppm 
+    #  Cr = 3.02 ppm
+    #  Cho = 3.22 ppm
 
+    # Il nous faut des indices sur l'axe des points. il faut calculer les indices relatives aux ppm selon la range de 0 à T
+    #Infos manquantes : la range des ppms va d'où à où ? 0 à X ?
+    
 
     def __init__(self, mrsi_instance: MRSI):
         self.mrsi = mrsi_instance
         if self.mrsi.data is None:
             self.mrsi.load()
+
+    def ppm_to_index(ppm_value, ppm_start, ppm_end, T):
+        """Convertit une valeur ppm en index T correspondant"""
+        return int((ppm_value - ppm_start) / (ppm_end - ppm_start) * T)
 
 
     def run(self, metabolites : list | None = None):
@@ -79,12 +90,14 @@ class METABOLITE_EXTRACTOR:
 
         return {
             "type": "MRSI",
+            "type_traitement" : "metabolite_extractor",
             "nom": f"{self._basename_no_ext(self.mrsi.nom)}_metabolite_{min_idx}_{max_idx}",
             "voxel_map_all": slices,
             "shape": [int(X), int(Y), int(Z)],
             "method": f"metabolite_{min_idx}_{max_idx}"
         }
     
+
 
     def _basename_no_ext(self, filename: str) -> str:
         """
