@@ -5,7 +5,10 @@ from fastapi import UploadFile
 from src.logger import get_logger
 from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
-from src.Modele.Traitement.test_Fourier import TEST_FOURIER
+from src.Modele.Traitement.traitement_fft import TRAITEMENT_FFT
+from src.Modele.Traitement.metabolite_extractor import METABOLITE_EXTRACTOR
+
+
 from src.Patients.patient import organize_files_by_patient
 
 logger = get_logger(__name__)  # logger spécifique au module controller.py
@@ -74,28 +77,56 @@ class Controller:
     # -----------------------------------------
     #   Méthodes pour le post-traitement
     # -----------------------------------------
-    def test_fft(self, filenames: list):
+    def upload_traitements(self, catalog: dict):
         """
-        filenames : liste des noms de fichiers IRM ou MRSI à traiter
+        catalog : dictionnaire
+        {
+            "MsrGB01_PUI_20110324_0000.nii.gz": {
+                "type_traitement": "fft",
+                "params": {"sigma": 20, "filtre": True}
+            },
+            "MsrGB01_PUI_20110324_0000.nii.gz": {
+                "type_traitement": "metabolite_extractor",
+                "params": {"metabolites": ["NAA","Cr"]}
+            }
+        }
+
+        type_traitement actuellement disponibles (les valeurs des params sont celles par défaut si paramètre non fourni) :
+            fft | params : sigma: int = 20, filtre: bool = True
+            metabolite_extractor | params : 
         """
-        logger.debug(f"controller.py : Début Post Traitement test_Fourier, fichiers : '{filenames}'")
-        logger.debug(f"controller.py : test_fft, fichiers irm dispos : '{self.last_irm}'")
-        logger.debug(f"controller.py : test_fft, fichiers mrsi dispos : '{self.last_mrsi}'")
+        logger.debug(f"controller.py : upload_traitements, fichiers irm dispos : '{self.last_irm}'")
+        logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.last_mrsi}'")
+
+        TRAITEMENT_MAP = {
+            "fft": TRAITEMENT_FFT,
+            "metabolite_extractor": METABOLITE_EXTRACTOR
+        }
 
         result = {}
 
-        for name in filenames:
+        for name, contenu in catalog.items():
             instance = None
             instance = self.last_irm.get(name) or self.last_mrsi.get(name) #l'instance du fichier concerné
             
-            if instance == None:
-                logger.info(f"controller.py : test_fft : fichier non trouvé '{name}'")
+            if instance is None:
                 result[name] = {"error": "IRM/MRSI non trouvée. Vous essayez de faire un traitement sur un fichier jamais upload"}
                 continue
             
-            traitement_fft = TEST_FOURIER(instance)
+            type_traitement = contenu.get("type_traitement")
+            if not type_traitement:
+                result[name] = {"error": "type_traitement manquant"}
+                continue
 
-            result[name] = traitement_fft.get_fft()
+            classe = TRAITEMENT_MAP.get(type_traitement)
+            if classe is None:
+                result[name] = {"error": f"Type de traitement inconnu : {type_traitement}"}
+                continue
 
-        logger.info("controller.py : Post Traitement test_Fourier terminé")
+            params = contenu.get("params", {})
+
+            traitement = classe(instance)
+            result[name] = traitement.run(**params)                   
+
+        logger.info("controller.py : upload_traitements : traitement terminé")
         return result

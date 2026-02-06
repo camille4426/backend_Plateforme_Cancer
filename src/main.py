@@ -129,11 +129,39 @@ async def upload_json_dataset(
 # -----------------------------------------
 # Traitement Routes
 # -----------------------------------------
+#@app.post("/traitements/")
 @app.post("/traitement/test_fft/")
-async def test_fft(filenames: list[str] = Body(...)):
+async def test_fft(catalog: dict = Body(...)):
+    """
+    catalog attendu :
+    {
+        "MsrGB01_PUI_20110324_0000.nii.gz": {
+            "type_traitement": "fft",
+            "params": {"sigma": 20, "filtre": True}
+        },
+        "MsrGB01_PUI_20110324_0001.nii.gz": {
+            "type_traitement": "metabolite_extractor",
+            "params": {"metabolites": ["NAA","Cr"]}
+        }
+    }
+    """
     try:
-        return controller.test_fft(filenames)
+        return controller.upload_traitements(catalog)
     except Exception as e:
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
+    
+
+'''
+
+@app.post("/traitement/test_fft/")
+async def test_fft(filenames: list[str] = Body(...)):
+    try:
+        return controller.upload_traitements(filenames)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+'''
