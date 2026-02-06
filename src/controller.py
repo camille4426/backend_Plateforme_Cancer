@@ -125,6 +125,10 @@ class Controller:
                 result[name] = {"error": f"Type de traitement inconnu : {type_traitement}"}
                 continue
 
+            if type_traitement is "metabolite_extractor" and isinstance(instance, IRM):
+                result[name] = {"error": f"Type de traitement non compatible : une extraction de métabolites se fait uniquement sur MRSI"}
+                continue
+
             params = contenu.get("params", {})
 
             traitement = classe(instance)
