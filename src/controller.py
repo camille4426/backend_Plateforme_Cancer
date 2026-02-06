@@ -21,6 +21,10 @@ class Controller:
         # = Dictionnaires de toutes les irms et mrsi utilisées pendant la session courante 
         # clé = nom du fichier, valeur = classe IRM ou MRSI correspondante
         
+        # Track the most recently uploaded files
+        self.current_irm_filename = None
+        self.current_mrsi_filename = None
+        
         
 
     # -----------------------------------------
@@ -48,6 +52,7 @@ class Controller:
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
         self.last_irm[fichier.filename] = IRM(fichier)
+        self.current_irm_filename = fichier.filename
         
         # load() est appelé automatiquement par get_all_slices si data est None
         payload = self.last_irm[fichier.filename].get_all_slices()
@@ -59,6 +64,7 @@ class Controller:
     def upload_mrsi(self, fichier: UploadFile):
         logger.debug("controller.py : Démarrage traitement MRSI")
         self.last_mrsi[fichier.filename] = MRSI(fichier.filename, fichier)
+        self.current_mrsi_filename = fichier.filename
         # On renvoie toutes les coupes pour la navigation 3D
         payload = self.last_mrsi[fichier.filename].get_all_voxel_maps()
         logger.info("controller.py : Traitement MRSI terminé")
@@ -67,9 +73,15 @@ class Controller:
 
     def get_mrsi_spectrum(self, x: int, y: int, z: int):
         logger.debug("controller.py : Démarrage traitement MRSI spectre")
-        if self.last_mrsi is None:
+        if not self.last_mrsi or self.current_mrsi_filename is None:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
-        return self.last_mrsi.spectrum(x, y, z)
+        
+        # Get the most recently uploaded MRSI
+        mrsi_instance = self.last_mrsi.get(self.current_mrsi_filename)
+        if mrsi_instance is None:
+            return {"error": "MRSI instance non trouvée."}
+            
+        return mrsi_instance.spectrum(x, y, z)
     
     # -----------------------------------------
     #   Méthodes pour le post-traitement
