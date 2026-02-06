@@ -8,7 +8,6 @@ colorlog
 fastapi==0.122.0
 h11==0.16.0
 idna==3.11
-logging
 numpy==2.4.2
 nibabel==5.3.3
 passlib[bcrypt]==1.7.4
