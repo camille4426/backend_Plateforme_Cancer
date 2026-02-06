@@ -19,12 +19,14 @@ class TEST_FOURIER:
 
     def __init__(self, instance):
         self.instance = instance
-        self.data_dico = None #get_all_slices si IRM et spectrum si MRSI
+        self.data_dico = None #get_all_slices si IRM et get_all_voxel_maps si MRSI
 
         if isinstance(self.instance, IRM):
             self.data_dico = self.instance.get_all_slices()
         elif isinstance(self.instance, MRSI):
-            self.data_dico = self.instance.spectrum()
+            # For MRSI, we get the voxel maps (not a single spectrum)
+            # Note: MRSI FFT processing is not yet implemented (see _traitement_mrsi)
+            self.data_dico = self.instance.get_all_voxel_maps()
         else:
             raise ValueError(f"Instance inconnue pour FFT (ne traite que les IRM et MRSI)")
 
