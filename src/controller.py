@@ -94,6 +94,8 @@ class Controller:
         type_traitement actuellement disponibles (les valeurs des params sont celles par défaut si paramètre non fourni) :
             fft | params : sigma: int = 20, filtre: bool = True
             metabolite_extractor | params : 
+
+        Note : tous les traitements fonctionnement sans les params donnés, avec des valeurs par défaut pour tous les paramètres manquants
         """
         logger.debug(f"controller.py : upload_traitements, fichiers irm dispos : '{self.last_irm}'")
         logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.last_mrsi}'")

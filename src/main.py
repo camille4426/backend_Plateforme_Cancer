@@ -144,6 +144,12 @@ async def test_fft(catalog: dict = Body(...)):
             "params": {"metabolites": ["NAA","Cr"]}
         }
     }
+
+    type_traitement actuellement disponibles (les valeurs des params sont celles par défaut si paramètre non fourni) :
+        fft | params : sigma: int = 20, filtre: bool = True
+        metabolite_extractor | params : 
+
+    Note : tous les traitements fonctionnement sans les params donnés, avec des valeurs par défaut pour tous les paramètres manquants
     """
     try:
         return controller.upload_traitements(catalog)
