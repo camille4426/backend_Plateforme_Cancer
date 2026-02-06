@@ -19,8 +19,19 @@ class Controller:
         self.app = app
         logger.info("controller.py : Controleur initialisé")
         
+<<<<<<< Updated upstream
         self.last_irm = {} 
         self.last_mrsi = {}
+=======
+        self.previous_irm = {} 
+        self.previous_mrsi = {}
+        self.last_irm = None
+        self.last_mrsi = None
+        # = Dictionnaires de toutes les irms et mrsi utilisées pendant la session courante 
+        # clé = nom du fichier, valeur = classe IRM ou MRSI correspondante
+        
+        
+>>>>>>> Stashed changes
 
     def get_json_by_patient(self, json_data: dict):
         """
@@ -37,9 +48,15 @@ class Controller:
 
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
-        self.last_irm[fichier.filename] = IRM(fichier)
+        self.previous_irm[fichier.filename] = IRM(fichier)
+        self.last_irm = self.previous_irm[fichier.filename]
         
+<<<<<<< Updated upstream
         payload = self.last_irm[fichier.filename].get_all_slices()
+=======
+        # load() est appelé automatiquement par get_all_slices si data est None
+        payload = self.previous_irm[fichier.filename].get_all_slices()
+>>>>>>> Stashed changes
 
         logger.info("controller.py (upload_irm) : Traitement IRM terminé")
         return payload
@@ -47,8 +64,15 @@ class Controller:
 
     def upload_mrsi(self, fichier: UploadFile):
         logger.debug("controller.py : Démarrage traitement MRSI")
+<<<<<<< Updated upstream
         self.last_mrsi[fichier.filename] = MRSI(fichier.filename, fichier)
         payload = self.last_mrsi[fichier.filename].get_all_voxel_maps()
+=======
+        self.previous_mrsi[fichier.filename] = MRSI(fichier.filename, fichier)
+        self.last_mrsi = self.previous_mrsi[fichier.filename]
+        # On renvoie toutes les coupes pour la navigation 3D
+        payload = self.previous_mrsi[fichier.filename].get_all_voxel_maps()
+>>>>>>> Stashed changes
         logger.info("controller.py : Traitement MRSI terminé")
         return payload
 
@@ -86,8 +110,8 @@ class Controller:
 
         Note : tous les traitements fonctionnement sans les params donnés, avec des valeurs par défaut pour tous les paramètres manquants
         """
-        logger.debug(f"controller.py : upload_traitements, fichiers irm dispos : '{self.last_irm}'")
-        logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.last_mrsi}'")
+        logger.debug(f"controller.py : upload_traitements, fichiers irm dispos : '{self.previous_irm}'")
+        logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.previous_mrsi}'")
 
         TRAITEMENT_MAP = {
             "fft": TRAITEMENT_FFT,
@@ -98,7 +122,11 @@ class Controller:
 
         for name, contenu in catalog.items():
             instance = None
+<<<<<<< Updated upstream
             instance = self.last_irm.get(name) or self.last_mrsi.get(name)
+=======
+            instance = self.previous_irm.get(name) or self.previous_mrsi.get(name) #l'instance du fichier concerné
+>>>>>>> Stashed changes
             
             if instance is None:
                 result[name] = {"error": "IRM/MRSI non trouvée. Vous essayez de faire un traitement sur un fichier jamais upload"}
