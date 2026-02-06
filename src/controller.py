@@ -132,3 +132,18 @@ class Controller:
 
         logger.info("controller.py : upload_traitements : traitement terminé")
         return result
+
+
+
+'''
+
+ {
+            "MsrGB01_PUI_20110324_0000.nii.gz": {
+                "type_traitement": "fft",
+            },
+            "MsrGB_MRSI_01_PUI_20110324_hsvd_atlas.nii": {
+                "type_traitement": "metabolite_extractor",
+            }
+        }
+
+'''
