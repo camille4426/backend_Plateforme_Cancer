@@ -18,16 +18,7 @@ class Controller:
         
         self.last_irm = {} 
         self.last_mrsi = {}
-        # = Dictionnaires de toutes les irms et mrsi utilisées pendant la session courante 
-        # clé = nom du fichier, valeur = classe IRM ou MRSI correspondante
-        
-        
 
-    # -----------------------------------------
-
-    # -----------------------------------------
-    #   Méthodes pour organisation fichiers par patient
-    # -----------------------------------------
     def get_json_by_patient(self, json_data: dict):
         """
         Reçoit le JSON du front et renvoie le JSON ordonné par patient et par date.
@@ -41,15 +32,10 @@ class Controller:
             logger.error(f"controller.py : Erreur traitement JSON - {e}")
             raise e
 
-    # -----------------------------------------
-    #   Méthodes pour upload les fichiers (traitement données IRM / MRSI)
-    # -----------------------------------------
-
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
         self.last_irm[fichier.filename] = IRM(fichier)
         
-        # load() est appelé automatiquement par get_all_slices si data est None
         payload = self.last_irm[fichier.filename].get_all_slices()
 
         logger.info("controller.py (upload_irm) : Traitement IRM terminé")
@@ -59,7 +45,6 @@ class Controller:
     def upload_mrsi(self, fichier: UploadFile):
         logger.debug("controller.py : Démarrage traitement MRSI")
         self.last_mrsi[fichier.filename] = MRSI(fichier.filename, fichier)
-        # On renvoie toutes les coupes pour la navigation 3D
         payload = self.last_mrsi[fichier.filename].get_all_voxel_maps()
         logger.info("controller.py : Traitement MRSI terminé")
         return payload
@@ -71,9 +56,6 @@ class Controller:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
         return self.last_mrsi.spectrum(x, y, z)
     
-    # -----------------------------------------
-    #   Méthodes pour le post-traitement
-    # -----------------------------------------
     def test_fft(self, filenames: list):
         """
         filenames : liste des noms de fichiers IRM ou MRSI à traiter
@@ -86,7 +68,7 @@ class Controller:
 
         for name in filenames:
             instance = None
-            instance = self.last_irm.get(name) or self.last_mrsi.get(name) #l'instance du fichier concerné
+            instance = self.last_irm.get(name) or self.last_mrsi.get(name)
             
             if instance == None:
                 logger.info(f"controller.py : test_fft : fichier non trouvé '{name}'")

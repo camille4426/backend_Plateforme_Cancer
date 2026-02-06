@@ -10,7 +10,7 @@ from src.auth import (
     Token, User, get_current_user, 
     ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_password_hash
 )
-import src.auth as auth  # importing the module to monkeypatch/access helper functions if needed
+import src.auth as auth
 
 # -----------------------------------------
 # Initialisation FastAPI + Controller
@@ -36,12 +36,12 @@ controller = Controller(FRONTEND_URL, app)
 @app.on_event("startup")
 def startup_event():
     init_db()
-    # Create default user if not exists
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username = ?", ("admin",))
     if not cursor.fetchone():
-        # Create admin user
+
         hashed_pw = get_password_hash("admin")
         cursor.execute("INSERT INTO users (username, hashed_password) VALUES (?, ?)", ("admin", hashed_pw))
         conn.commit()
@@ -52,13 +52,6 @@ def startup_event():
 # Auth Routes
 # -----------------------------------------
 
-# We need to implement authenticate_user in auth.py or here. 
-# Let's add it to auth.py via a separate tool call if I missed it, 
-# OR implement it here and move it later.
-# Actually I missed `authenticate_user` in `auth.py`. I defined `get_user` and `verify_password`.
-# I will implement the logic inside the route or add the function to auth.py. 
-# Better to add it to auth.py properly, but to save a round trip for now I'll define a helper here 
-# or use what I have. I have `get_user` and `verify_password` in auth.py.
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):

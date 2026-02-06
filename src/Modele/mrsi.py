@@ -38,7 +38,7 @@ class MRSI:
     def load(self):
         tmp_path = self._save_upload_to_temp()
         try:
-            self.img = nib.load(tmp_path)  # :contentReference[oaicite:6]{index=6}
+            self.img = nib.load(tmp_path)
             self.data = self.img.get_fdata()  # :contentReference[oaicite:7]{index=7}
             logger.info(f"MRSI chargée: shape={self.data.shape}, dtype={self.data.dtype}")
         finally:
@@ -99,7 +99,6 @@ class MRSI:
                 "method": method
             }
 
-        # ---- Sinon on renvoie toutes les coupes pour la slider navigation ----
     def get_all_voxel_maps(self, method="sum_abs"):
         """
         Renvoie TOUTES les coupes de la voxel map.

@@ -30,8 +30,7 @@ def test_auth():
 
     # 3. Test Protected Route WITH Token
     print("\n[3] Testing Protected Route WITH Token (GET /spectrum/0/0/0)...")
-    # Note: This might fail if no MRSI data is loaded, but it should return 200 or 500/404, NOT 401.
-    # Actually, controller checks `if self.last_mrsi is None`.
+
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.get(f"{BASE_URL}/spectrum/0/0/0", headers=headers)
     

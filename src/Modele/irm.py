@@ -31,9 +31,8 @@ class IRM:
             elif lower.endswith(".nii"):
                 suffix = ".nii"
         if suffix == "":
-            suffix = ".nii.gz"  # fallback
+            suffix = ".nii.gz"
 
-        # Important: on remet le pointeur au début si besoin
         try:
             self.fichier.file.seek(0)
         except Exception:
@@ -51,7 +50,7 @@ class IRM:
         """
         tmp_path = self._save_upload_to_temp()
         try:
-            self.img = nib.load(tmp_path)  # nibabel déduit le format depuis l'extension :contentReference[oaicite:4]{index=4}
+            self.img = nib.load(tmp_path)
             self.data = self.img.get_fdata()  # float avec scaling :contentReference[oaicite:5]{index=5}
             logger.info(f"IRM chargée: shape={self.data.shape}, dtype={self.data.dtype}")
         finally:
@@ -107,8 +106,6 @@ class IRM:
         # Couche axiale: z=cz => (X,Y)
         axi = self._to_uint8_slice(vol[:, :, cz])
 
-        # Optionnel: transposer pour que l'affichage soit plus "naturel" côté front
-        # (ça dépend du front; je laisse simple)
         return {
             "type": "IRM",
             "nom_fichier": self.fichier.filename,
@@ -137,28 +134,18 @@ class IRM:
 
         X, Y, Z = vol.shape
 
-        # On normalise le volume complet pour garder une cohérence de contraste entre les coupes
         vmin, vmax = np.nanmin(vol), np.nanmax(vol)
         if vmin == vmax:
             norm_vol = np.zeros_like(vol, dtype=np.uint8)
         else:
             norm_vol = (vol - vmin) / (vmax - vmin)
             norm_vol = (norm_vol * 255).astype(np.uint8)
-
-        # On prépare les listes pour le JSON
-        # Sagittal: X stacks of (Y, Z)
-        # Coronal: Y stacks of (X, Z)
-        # Axial: Z stacks of (X, Y)
-        
-        # Optimization: Return just the 3D volume. Frontend handles slicing.
-        # norm_vol shape is (X, Y, Z).
-        # tolist() creates a nested list structure: [X][Y][Z]
         
         return {
             "type": "IRM",
             "nom_fichier": self.fichier.filename,
             "shape": [int(X), int(Y), int(Z)],
-            "data": norm_vol.tolist() # Single source of truth
+            "data": norm_vol.tolist()
         }
 
     def summary(self):

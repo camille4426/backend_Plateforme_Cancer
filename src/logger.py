@@ -1,11 +1,6 @@
-# src/logger.py
 import logging
-import colorlog #pour colorer nos logs sinon on voit rien
+import colorlog
 
-# -----------------------------------------
-# Configuration des logs, centralisé
-# -----------------------------------------
-#Important : la configuration des logs se fait avant l'initialisation FastAPI
 def get_logger(name: str):
     handler = colorlog.StreamHandler()
     formatter = colorlog.ColoredFormatter(
@@ -24,10 +19,9 @@ def get_logger(name: str):
     logger = colorlog.getLogger(name) # Pour ajout de nos propres logs
     logger.addHandler(handler)
     #logger.setLevel(logging.INFO)
-    logger.setLevel(logging.DEBUG) #Utiliser cette ligne à la place de celle au dessus pour voir les debugs aussi.
-    logger.propagate = False  # <-- important pour éviter l'affichage Message: ... Arguments: ()
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
 
-    # On récupère les logs donnés par uvicorn:
     logging.getLogger("uvicorn").setLevel(logging.INFO)
     logging.getLogger("uvicorn.error").setLevel(logging.INFO)
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)

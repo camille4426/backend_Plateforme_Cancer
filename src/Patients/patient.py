@@ -9,21 +9,10 @@ def organize_files_by_patient(input_json: dict) -> dict:
     - chaque analyse contient la liste des fichiers correspondants
     """
 
-    # Extraction patient et date depuis le nom de fichier
-        # Exemple formats :
-        # MsrGB_MRSI_01_PUI_20110324_hsvd_atlas.nii
-        # MsrGB03_COU_20110325_0003.nii.gz
-
-    # Les modalités IRM sont les suivantes :
-    #   0000 = T1
-    #   0001 = T1c
-    #   0002 = T2
-    #   0003 = Flair
-
     files = input_json.get("files", [])
     
-    patients_dict = defaultdict(lambda: defaultdict(list)) #Création d'un dictionnaire de patients
-    fichiers_non_reconnus = []  # Liste pour les fichiers non reconnus
+    patients_dict = defaultdict(lambda: defaultdict(list))
+    fichiers_non_reconnus = []
 
     regex = r"^(?P<type_analyse>MsrGB(_MRSI)?)_?(?P<id_patient>\d{2}_[A-Z]{3})_(?P<date>\d{8})_(?P<modalites_IRM>\d{4})?([^\.]*)(?P<extension>.*)"
 
@@ -32,15 +21,13 @@ def organize_files_by_patient(input_json: dict) -> dict:
 
         match = re.search(regex, nom_fichier)
         if not match:
-            # Si le fichier ne correspond pas au format attendu, on ignore
             fichiers_non_reconnus.append(nom_fichier)
             continue
         
         patient_id = match.group("id_patient")
         date = match.group("date")
           
-        #type = match.group("type_analyse") #pas utile si on considère l'extension pour définir le type d'analyse
-        ext = match.group("extension") #on considère le type d'analyse selon l'extension ?
+        ext = match.group("extension")
         if ext == ".nii":
             type = "MRSI"
         elif ext == ".nii.gz":
@@ -63,7 +50,6 @@ def organize_files_by_patient(input_json: dict) -> dict:
         file_info = {
             "relative_path": f["relativePath"],
             "type_analyse": type,
-            #"extension": match.group("extension") #pas forcément utile
         }
 
         if modalites_IRM is not None:

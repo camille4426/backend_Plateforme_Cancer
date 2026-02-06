@@ -11,8 +11,7 @@ from pydantic import BaseModel
 
 from src.database import get_db_connection
 
-# Configuration
-# In production, this should be an env variable!
+
 SECRET_KEY = "CHANGE_ME_IN_PRODUCTION_SECRET_KEY_FOR_JWT"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
