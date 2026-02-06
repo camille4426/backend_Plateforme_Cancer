@@ -89,11 +89,17 @@ async def upload_irm(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        return controller.upload_irm(fichier)
+        result = controller.upload_irm(fichier)
+        # Check if result contains an error
+        if isinstance(result, dict) and "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement IRM: {str(e)}")
 
 @app.post("/upload-mrsi/")
 async def upload_mrsi(
@@ -101,18 +107,34 @@ async def upload_mrsi(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        return controller.upload_mrsi(fichier)
+        result = controller.upload_mrsi(fichier)
+        # Check if result contains an error
+        if isinstance(result, dict) and "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement MRSI: {str(e)}")
 
 @app.get("/spectrum/{x}/{y}/{z}")
 async def get_spectrum(
     x: int, y: int, z: int, 
     current_user: User = Depends(get_current_user)
 ):
-    return controller.get_mrsi_spectrum(x, y, z)
+    result = controller.get_mrsi_spectrum(x, y, z)
+    # If result contains an error, raise appropriate HTTP exception
+    if isinstance(result, dict) and "error" in result:
+        error_msg = result["error"]
+        if "hors limites" in error_msg.lower() or "out" in error_msg.lower():
+            raise HTTPException(status_code=400, detail=error_msg)
+        elif "non trouvée" in error_msg.lower() or "uploadée" in error_msg.lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        else:
+            raise HTTPException(status_code=500, detail=error_msg)
+    return result
 
 @app.post("/upload-json-dataset/")
 async def upload_json_dataset(
@@ -120,11 +142,17 @@ async def upload_json_dataset(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        return controller.get_json_by_patient(json_data)
+        result = controller.get_json_by_patient(json_data)
+        # Check if result contains an error
+        if isinstance(result, dict) and "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement JSON dataset: {str(e)}")
 
 # -----------------------------------------
 # Traitement Routes
@@ -132,8 +160,14 @@ async def upload_json_dataset(
 @app.post("/traitement/test_fft/")
 async def test_fft(filenames: list[str] = Body(...)):
     try:
-        return controller.test_fft(filenames)
+        result = controller.test_fft(filenames)
+        # Check if result contains errors for all files
+        if isinstance(result, dict) and all("error" in v for v in result.values()):
+            raise HTTPException(status_code=400, detail="Tous les fichiers demandés sont invalides ou non trouvés")
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement FFT: {str(e)}")

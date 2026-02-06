@@ -74,12 +74,12 @@ class Controller:
     def get_mrsi_spectrum(self, x: int, y: int, z: int):
         logger.debug("controller.py : Démarrage traitement MRSI spectre")
         if not self.last_mrsi or self.current_mrsi_filename is None:
-            return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
+            return {"error": "Aucune MRSI n'a été uploadée. Veuillez d'abord uploader un fichier MRSI via /upload-mrsi/."}
         
         # Get the most recently uploaded MRSI
         mrsi_instance = self.last_mrsi.get(self.current_mrsi_filename)
         if mrsi_instance is None:
-            return {"error": "MRSI instance non trouvée."}
+            return {"error": "Instance MRSI non trouvée pour le fichier le plus récent."}
             
         return mrsi_instance.spectrum(x, y, z)
     
