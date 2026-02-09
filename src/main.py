@@ -123,7 +123,7 @@ async def upload_json_dataset(
 # Traitement Routes
 # -----------------------------------------
 #@app.post("/traitements/")
-@app.post("/traitement/test_fft/")
+@app.post("/traitements")
 async def test_fft(catalog: dict = Body(...)):
     """
     catalog attendu :

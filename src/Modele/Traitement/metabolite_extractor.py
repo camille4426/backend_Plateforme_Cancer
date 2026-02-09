@@ -6,17 +6,18 @@ logger = get_logger(__name__)
 
 class METABOLITE_EXTRACTOR:
     """
+    EN TRAVAUX, NE PAS UTILISER
     Extraction de métabolites voxel par voxel à partir d'une MRSI.
     Retourne des cartes 3D normalisées pour affichage front.
     """
-    # Valeurs attendues (ppm)
+    # Valeurs attendues (ppm) (valeurs obtenues diapo 2 ref )
     METABOLITES_VALEURS = { 
             "NAA": 2.01,
             "Cr": 3.02,
             "Cho": 3.22
     }
     
-    # Largeur de bande d'intégration en ppm (ex: +/- 0.1 ppm)
+    # Largeur de bande d'intégration en ppm (comment choisir ???)
     INTEGRATION_WIDTH = 0.2
 
     def __init__(self, mrsi_instance: MRSI, irm_instance=None):

@@ -5,7 +5,7 @@ from src.logger import get_logger
 
 logger = get_logger(__name__)
 
-class TRAITEMENT_FFT:
+class TRAITEMENT_FFT_SPATIALE:
     """
     Post Traitement Test : Transformée de Fourier
     Applicable sur IRM et MRSI

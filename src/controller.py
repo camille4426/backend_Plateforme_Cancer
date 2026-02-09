@@ -5,7 +5,8 @@ from fastapi import UploadFile
 from src.logger import get_logger
 from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
-from src.Modele.Traitement.traitement_fft import TRAITEMENT_FFT
+from src.Modele.Traitement.traitement_fft_spatiale import TRAITEMENT_FFT_SPATIALE
+from src.Modele.Traitement.traitement_fft_spectrale import TRAITEMENT_FFT_SPECTRALE
 from src.Modele.Traitement.metabolite_extractor import METABOLITE_EXTRACTOR
 
 
@@ -82,7 +83,7 @@ class Controller:
         catalog : dictionnaire
         {
             "MsrGB01_PUI_20110324_0000.nii.gz": {
-                "type_traitement": "fft",
+                "type_traitement": "fft_spatiale",
                 "params": {"sigma": 20, "filtre": True}
             },
             "MsrGB01_PUI_20110324_0000.nii.gz": {
@@ -91,9 +92,12 @@ class Controller:
             }
         }
 
-        type_traitement actuellement disponibles (les valeurs des params sont celles par défaut si paramètre non fourni) :
-            fft | params : sigma: int = 20, filtre: bool = True
-            metabolite_extractor | params : 
+        type_traitement actuellement disponibles (valeurs par défaut | valeurs possibles) :
+            fft_spatiale : 
+                    sigma: int = 20 | largeur de la gaussienne pour filtrage
+                    filtre: bool = True | True → passe-haut, False → passe-bas
+            fft_spectrale :
+            metabolite_extractor : 
 
         Note : tous les traitements fonctionnement sans les params donnés, avec des valeurs par défaut pour tous les paramètres manquants
         """
@@ -101,7 +105,8 @@ class Controller:
         logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.previous_mrsi}'")
 
         TRAITEMENT_MAP = {
-            "fft": TRAITEMENT_FFT,
+            "fft_spatiale": TRAITEMENT_FFT_SPATIALE,
+            "fft_spectrale": TRAITEMENT_FFT_SPECTRALE,
             "metabolite_extractor": METABOLITE_EXTRACTOR
         }
 
@@ -125,22 +130,16 @@ class Controller:
                 result[name] = {"error": f"Type de traitement inconnu : {type_traitement}"}
                 continue
 
-            if type_traitement == "metabolite_extractor" and isinstance(instance, IRM):
-                result[name] = {"error": f"Type de traitement non compatible : une extraction de métabolites se fait uniquement sur MRSI"}
+            # Compatibilité type des données (pas d'IRM dans le metabolite extractor)
+            if type_traitement == ("fft_spectrale" or "metabolite_extractor") and isinstance(instance, IRM):
+                result[name] = {"error": f"Type de traitement non compatible : {type_traitement} se fait uniquement sur MRSI"}
                 continue
 
             params = contenu.get("params", {})
 
-            if type_traitement == "metabolite_extractor":
-                # Try to pass an MRI instance for resampling
-                irm_instance = None
-                if self.last_irm:
-                    irm_instance = list(self.last_irm.values())[-1]
-                traitement = classe(instance, irm_instance=irm_instance)
-            else:
-                traitement = classe(instance)
+            traitement = classe(instance) #traitement est de la classe associée dans TRAITEMENT_MAP
 
-            result[name] = traitement.run(**params)                   
+            result[name] = traitement.run(**params) #Exécution du traitement                  
 
         logger.info("controller.py : upload_traitements : traitement terminé")
         return result
