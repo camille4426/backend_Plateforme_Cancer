@@ -52,7 +52,7 @@ class IRM:
         tmp_path = self._save_upload_to_temp()
         try:
             self.img = nib.load(tmp_path)
-            self.data = self.img.get_fdata()  # float avec scaling :contentReference[oaicite:5]{index=5}
+            self.data = self.img.get_fdata()  # float avec scaling
             logger.info(f"IRM chargée: shape={self.data.shape}, dtype={self.data.dtype}")
         finally:
             # Nettoyage du fichier temporaire

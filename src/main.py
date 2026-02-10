@@ -131,7 +131,7 @@ async def traitements_catalog():
 
 
 @app.post("/traitements")
-async def test_fft(catalog: dict = Body(...)):
+async def run_traitements(catalog: dict = Body(...)):
     """
     catalog attendu :
     {
@@ -149,7 +149,6 @@ async def test_fft(catalog: dict = Body(...)):
         fft | params : sigma: int = 20, filtre: bool = True
         metabolite_extractor | params : 
 
-    Note : tous les traitements fonctionnement sans les params donnés, avec des valeurs par défaut pour tous les paramètres manquants
     """
     try:
         return controller.upload_traitements(catalog)

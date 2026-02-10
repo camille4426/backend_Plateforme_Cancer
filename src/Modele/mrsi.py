@@ -40,7 +40,7 @@ class MRSI:
         tmp_path = self._save_upload_to_temp()
         try:
             self.img = nib.load(tmp_path)
-            self.data = self.img.get_fdata()  # :contentReference[oaicite:7]{index=7}
+            self.data = self.img.get_fdata()
             logger.info(f"MRSI chargée: shape={self.data.shape}, dtype={self.data.dtype}")
         finally:
             try:
@@ -133,7 +133,6 @@ class MRSI:
     def get_spectrum(self, x: int, y: int, z: int):
         """
         Renvoie le spectre 1D du voxel (x,y,z).
-        Alias de spectrum() pour correspondre à la demande.
         """
         return self.spectrum(x, y, z)
 
