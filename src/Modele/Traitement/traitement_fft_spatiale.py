@@ -1,4 +1,5 @@
 import numpy as np
+import base64
 from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
 from src.logger import get_logger
@@ -9,23 +10,12 @@ class TRAITEMENT_FFT_SPATIALE:
     """
     Post Traitement Test : Transformée de Fourier
     Applicable sur IRM et MRSI
-
-    IRM : Affiche le spectre des fréquences au lieu des intensités spatiales de l'upload 
-            * Hautes fréquences = détails fins et contours
-            * Basses fréquences = structures larges/uniformes
-
-    MRSI : Pas encore fait
     """
 
     def __init__(self, instance):
-        self.data_dico = None #get_all_slices si IRM et get_all_voxel_maps si MRSI
-
-        if isinstance(instance, IRM):
-            self.data_dico = instance.get_all_slices()
-        elif isinstance(instance, MRSI):
-            self.data_dico = instance.get_all_voxel_maps()
-        else:
-            raise ValueError(f"Instance inconnue pour FFT (ne traite que les IRM et MRSI)")
+        self.instance = instance
+        if hasattr(self.instance, "data") and self.instance.data is None:
+            self.instance.load()
 
     def run(self, sigma: int = 20, filtre: bool = True):
         """
@@ -33,43 +23,45 @@ class TRAITEMENT_FFT_SPATIALE:
         sigma : largeur de la gaussienne pour filtrage
         filtre : True → passe-haut, False → passe-bas
         """
-        if self.data_dico["type"] == "IRM":
-            logger.debug(f"traitement_fft.py : get_fft() : le type est IRM")
+        if isinstance(self.instance, IRM):
+            logger.debug(f"traitement_fft_spatiale.py : run() : le type est IRM")
+            volume = self.instance.data
+            X, Y, Z = volume.shape
             
-            # Conversion en tableau numpy
-            volume = np.array(self.data_dico["data"])
+            norm_vol, nom_filtre = self._traitement(volume, sigma, filtre)
+            base_name = self._basename_no_ext(self.instance.fichier.filename)
             
-            shape, data, nom_filtre = self._traitement(volume, sigma, filtre)
-            base_name = self._basename_no_ext(self.data_dico["nom_fichier"])
             return {
-            "type": "IRM",
-            "type_traitement" : nom_filtre,
-            "nom_fichier": base_name + nom_filtre,
-            "shape": shape,
-            "data": data
+                "type": "IRM",
+                "type_traitement" : nom_filtre,
+                "nom_fichier": base_name + nom_filtre,
+                "shape": [int(X), int(Y), int(Z)],
+                "data_b64": base64.b64encode(norm_vol.tobytes()).decode('utf-8')
             }
 
-        elif self.data_dico["type"] == "MRSI":
-            logger.debug(f"traitement_fft.py : get_fft() : le type est MRSI")
-
-            # voxel_map_all est une liste de slices 2D par Z 
-            # Il faut reconstituer le volume 3D
-            volume = np.array(self.data_dico["voxel_map_all"]) # shape = (Z, X, Y)
-            volume = np.transpose(volume, (1, 2, 0))  # Z-axis à la fin pour cohérence
+        elif isinstance(self.instance, MRSI):
+            logger.debug(f"traitement_fft_spatiale.py : run() : le type est MRSI")
             
-            shape, filtered_volume, nom_filtre = self._traitement(volume, sigma, filtre)
-            base_name = self._basename_no_ext(self.data_dico["nom"])
-            voxel_map_all = []
-            for z in range(shape[2]):
-                voxel_map_all.append(filtered_volume[:, :, z].tolist())
+            # Pour MRSI, on fait souvent la FFT sur la carte de puissance (voxel map actuelle)
+            # ou sur les données 4D? Le code original faisait sur la voxel map sommée.
+            d = self.instance.data
+            if d.ndim == 4:
+                volume = np.sum(np.abs(d), axis=-1)
+            else:
+                volume = d
+            
+            X, Y, Z = volume.shape
+            norm_vol, nom_filtre = self._traitement(volume, sigma, filtre)
+            base_name = self._basename_no_ext(self.instance.nom)
+            
             return {
-            "type": "MRSI",
-            "type_traitement" : nom_filtre,
-            "nom": base_name + nom_filtre,
-            "voxel_map_all": voxel_map_all,
-            "shape": shape,
-            "method": self.data_dico["method"]
-        }
+                "type": "MRSI",
+                "type_traitement" : nom_filtre,
+                "nom": base_name + nom_filtre,
+                "shape": [int(X), int(Y), int(Z)],
+                "data_b64": base64.b64encode(norm_vol.tobytes()).decode('utf-8'),
+                "method": f"fft_spatiale_{nom_filtre}"
+            }
 
         else:
             return {"error": "Type de donnée inconnu pour FFT (ne traite que les IRM et MRSI)"}
@@ -77,13 +69,8 @@ class TRAITEMENT_FFT_SPATIALE:
     
     def _traitement(self, volume: np.ndarray, sigma: int, filtre: bool):
         """
-        FFT 3D de l'IRM 
-        + filtre :
-            * False: passe-bas pour visualiser les structures principales (résultat = IRM floutée)
-            * True: passe-haut pour visualiser les détails (bords, contours).
-        sigma : largeur de la gaussienne pour le filtrage basse fréquence (passe-haut = original - low-pass)
+        FFT 3D + filtrage gaussien.
         """
-        
         # FFT 3D et centrage
         fft_vol = np.fft.fftn(volume)
         fft_shifted = np.fft.fftshift(fft_vol)
@@ -99,11 +86,10 @@ class TRAITEMENT_FFT_SPATIALE:
         dist = np.sqrt((x - cx)**2 + (y - cy)**2 + (z - cz)**2)
 
         # Masque passe-bas gaussien
-        mask = np.exp(-dist**2 / (2 * sigma**2)) # Filtre par gaussienne passe_bas
+        mask = np.exp(-dist**2 / (2 * sigma**2))
         nom_filtre = "_lowFFT"
 
-        if filtre: #Si c'est un filtre passe haut on fait l'inverse d'un passe-bas
-            # Passe-haut = original - basse fréquence
+        if filtre: 
             mask = 1 - mask
             nom_filtre = "_highFFT"
 
@@ -119,16 +105,12 @@ class TRAITEMENT_FFT_SPATIALE:
         else:
             norm_vol = ((vol_filtered - vmin) / (vmax - vmin) * 255).astype(np.uint8)
 
-
-        return [int(X), int(Y), int(Z)], norm_vol.tolist(), nom_filtre
+        return norm_vol, nom_filtre
     
     def _basename_no_ext(self, filename: str) -> str:
-        """
-        Retourne le nom de fichier sans extension, même pour .nii.gz
-        """
         if filename.endswith(".nii.gz"):
-            return filename[:-7]  # supprime ".nii.gz"
+            return filename[:-7]
         elif filename.endswith(".nii"):
-            return filename[:-4]  # supprime ".nii"
+            return filename[:-4]
         else:
             return filename
