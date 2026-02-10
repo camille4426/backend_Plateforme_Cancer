@@ -19,6 +19,17 @@ class TRAITEMENT_FFT_SPECTRALE:
         if self.instance.data is None:
             self.instance.load()
 
+    @staticmethod #Permet l'appel sans instance créée (car pas besoin de self)
+    def get_catalog_entry():
+        """
+        Retourne la description JSON de ce traitement pour le front.
+        """
+        return {
+            "label": "FFT Spectrale",
+            "type": ["MRSI"],
+            "params": {}
+        }
+
     def run(self):
         """
         Applique la FFT spectrale et renvoie la nouvelle voxel map.

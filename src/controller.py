@@ -14,6 +14,13 @@ from src.Patients.patient import organize_files_by_patient
 
 logger = get_logger(__name__)  # logger spécifique au module controller.py
 
+TRAITEMENT_MAP =  { #Liste des traitements disponibles, chaque classe associée doit avoir get_catalog_entry
+    "fft_spatiale": TRAITEMENT_FFT_SPATIALE,
+    "fft_spectrale": TRAITEMENT_FFT_SPECTRALE,
+    "metabolite_extractor": METABOLITE_EXTRACTOR
+}
+
+
 class Controller:
     def __init__(self, frontend_url: str, app):
         self.frontend_url = frontend_url
@@ -78,6 +85,27 @@ class Controller:
     # -----------------------------------------
     #   Méthodes pour le post-traitement
     # -----------------------------------------
+    @staticmethod
+    def get_catalog():
+        """
+        Permet au front d'obtenir la liste des traitements avec les paramètres demandés pour l'affichage
+        """
+        logger.debug("controller.py : get_catalog")
+        catalog = {}
+        for key, cls in TRAITEMENT_MAP.items():
+            entry = getattr(cls, "get_catalog_entry", None)
+            if callable(entry):
+                catalog[key] = entry()
+            else: # si la classe n'a pas de get_catalog_entry()
+                catalog[key] = {
+                    "label": key,
+                    "type": [],  # inconnu
+                    "params": {}
+                }
+        logger.debug(f"controller.py : fin get_catalog, résultat : '{catalog}'")
+        return catalog
+
+
     def upload_traitements(self, catalog: dict):
         """
         catalog : dictionnaire
@@ -103,13 +131,9 @@ class Controller:
         """
         logger.debug(f"controller.py : upload_traitements, fichiers irm dispos : '{self.previous_irm}'")
         logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.previous_mrsi}'")
+        logger.debug(f"controller.py : upload_traitements, catalogue reçu : '{catalog}'")
 
-        TRAITEMENT_MAP = {
-            "fft_spatiale": TRAITEMENT_FFT_SPATIALE,
-            "fft_spectrale": TRAITEMENT_FFT_SPECTRALE,
-            "metabolite_extractor": METABOLITE_EXTRACTOR
-        }
-
+        
         result = {}
 
         for name, contenu in catalog.items():

@@ -29,15 +29,24 @@ class METABOLITE_EXTRACTOR:
             
         # Tenter de récupérer les infos spectrales du header si possible
         self.ppm_range = (10.0, -2.0) # convention décroissante souvent
-    
-    def ppm_to_index(self, ppm_value, T):
+
+    @staticmethod #Permet l'appel sans instance créée (car pas besoin de self)
+    def get_catalog_entry():
         """
-        Convertit une valeur ppm en index T.
+        Retourne la description JSON de ce traitement pour le front.
         """
-        ppm_start, ppm_end = self.ppm_range
-        fraction = (ppm_value - ppm_start) / (ppm_end - ppm_start)
-        index = int(fraction * T)
-        return max(0, min(T-1, index))
+        return {
+            "label": "Extracteur de Métabolites",
+            "type": ["MRSI"],
+            "params": {
+                "metas": {
+                    "type_param": "choix_multiple",
+                    "label": "Métabolites",
+                    "select": ["NAA", "Cr", "Cho"],
+                    "default": ["NAA", "Cr", "Cho"]
+                }
+            }
+        }
 
     def run(self, metabolites : list | None = None):
         """
@@ -80,6 +89,15 @@ class METABOLITE_EXTRACTOR:
 
         return results
     
+    def ppm_to_index(self, ppm_value, T):
+        """
+        Convertit une valeur ppm en index T.
+        """
+        ppm_start, ppm_end = self.ppm_range
+        fraction = (ppm_value - ppm_start) / (ppm_end - ppm_start)
+        index = int(fraction * T)
+        return max(0, min(T-1, index))
+
     def _resample_to_mri(self, mrsi_3d_map):
         if self.irm is None or self.irm.img is None:
             return mrsi_3d_map, None, None

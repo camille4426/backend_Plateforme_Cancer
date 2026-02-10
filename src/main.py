@@ -122,7 +122,14 @@ async def upload_json_dataset(
 # -----------------------------------------
 # Traitement Routes
 # -----------------------------------------
-#@app.post("/traitements/")
+@app.get("/traitements/catalog")
+async def traitements_catalog():
+    """
+    Permet au front d'obtenir la liste des traitements avec les paramètres demandés pour l'affichage
+    """
+    return controller.get_catalog()
+
+
 @app.post("/traitements")
 async def test_fft(catalog: dict = Body(...)):
     """
@@ -150,17 +157,3 @@ async def test_fft(catalog: dict = Body(...)):
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
-    
-
-'''
-
-@app.post("/traitement/test_fft/")
-async def test_fft(filenames: list[str] = Body(...)):
-    try:
-        return controller.upload_traitements(filenames)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return {"error": str(e)}
-
-'''

@@ -17,18 +17,47 @@ class TRAITEMENT_FFT_SPATIALE:
         if hasattr(self.instance, "data") and self.instance.data is None:
             self.instance.load()
 
-    def run(self, sigma: int = 20, filtre: bool = True):
+    @staticmethod #Permet l'appel sans instance créée (car pas besoin de self)
+    def get_catalog_entry():
+        """
+        Retourne la description JSON de ce traitement pour le front.
+        """
+        return {
+            "label": "FFT Spatiale",
+            "type": ["IRM", "MRSI"],
+            "params": {
+                "filtre": {
+                    "type_param": "choix",
+                    "label": "Filtre",
+                    "select": ["Passe-haut", "Passe-bas"],
+                    "default": "Passe-haut"
+                },
+                "sigma": {
+                    "type": "int",
+                    "label": "Largeur gaussienne (sigma)",
+                    "range": [1,100],
+                    "default": 20
+                }
+            }
+        }
+
+    def run(self, sigma: int = 20, filtre: str = "Passe-haut"):
         """
         Retourne le résultat FFT selon le type de données.
         sigma : largeur de la gaussienne pour filtrage
         filtre : True → passe-haut, False → passe-bas
         """
+        if filtre == "Passe-haut" :
+            boo_filtre = True
+        elif filtre == "Passe-bas":
+            boo_filtre = False
+        
         if isinstance(self.instance, IRM):
             logger.debug(f"traitement_fft_spatiale.py : run() : le type est IRM")
             volume = self.instance.data
             X, Y, Z = volume.shape
             
-            norm_vol, nom_filtre = self._traitement(volume, sigma, filtre)
+            norm_vol, nom_filtre = self._traitement(volume, sigma, boo_filtre)
             base_name = self._basename_no_ext(self.instance.fichier.filename)
             
             return {
@@ -51,7 +80,7 @@ class TRAITEMENT_FFT_SPATIALE:
                 volume = d
             
             X, Y, Z = volume.shape
-            norm_vol, nom_filtre = self._traitement(volume, sigma, filtre)
+            norm_vol, nom_filtre = self._traitement(volume, sigma, boo_filtre)
             base_name = self._basename_no_ext(self.instance.nom)
             
             return {
