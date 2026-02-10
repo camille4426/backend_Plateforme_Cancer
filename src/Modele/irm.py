@@ -1,5 +1,6 @@
 import os
 import tempfile
+import base64
 import numpy as np
 import nibabel as nib
 from fastapi import UploadFile
@@ -145,7 +146,7 @@ class IRM:
             "type": "IRM",
             "nom_fichier": self.fichier.filename,
             "shape": [int(X), int(Y), int(Z)],
-            "data": norm_vol.tolist(),
+            "data_b64": base64.b64encode(norm_vol.tobytes()).decode('utf-8'),
             "affine": [ [float(v) for v in row] for row in self.img.affine ] if self.img is not None else None,
             "spacing": [float(x) for x in self.img.header.get_zooms()[:3]] if self.img is not None else None
         }

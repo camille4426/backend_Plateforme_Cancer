@@ -1,4 +1,5 @@
 import numpy as np
+import base64
 from src.Modele.mrsi import MRSI
 from src.logger import get_logger
 
@@ -337,15 +338,11 @@ class METABOLITE_EXTRACTOR:
         # Convert to uint8 for transport
         final_map = norm_voxel_map.astype(np.uint8)
 
-        # Découpage en slices pour le front
-        # Slices along Z axis
-        slices = [final_map[:, :, z].tolist() for z in range(used_shape[2])]
-
         return {
             "type": "MRSI",
             "type_traitement" : "metabolite_extractor",
             "nom": f"{self._basename_no_ext(self.mrsi.nom)}_metabolite",
-            "voxel_map_all": slices,
+            "data_b64": base64.b64encode(final_map.tobytes()).decode('utf-8'),
             "shape": used_shape,
             "method": f"metabolite_idx_{min_idx}_{max_idx}_resampled_{self.irm is not None}",
             "affine": [ [float(v) for v in row] for row in affine_to_send ] if affine_to_send is not None else None,

@@ -1,5 +1,6 @@
 import os
 import tempfile
+import base64
 import numpy as np
 import nibabel as nib
 from fastapi import UploadFile
@@ -118,14 +119,10 @@ class MRSI:
             vm = np.sum(np.abs(d), axis=-1)
 
         X, Y, Z = vm.shape
-        slices = []
-        for i in range(Z):
-            slices.append(self._to_uint8_slice(vm[:, :, i]).tolist())
-
         return {
             "type": "MRSI",
             "nom": self.nom,
-            "voxel_map_all": slices,
+            "data_b64": base64.b64encode(vm.astype(np.uint8).tobytes()).decode('utf-8'),
             "shape": [int(X), int(Y), int(Z)],
             "method": method,
             "affine": [ [float(v) for v in row] for row in self.img.affine ] if self.img is not None else None,
