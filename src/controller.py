@@ -70,7 +70,6 @@ class Controller:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
         
         
-        #filename = list(self.last_mrsi.keys())[-1]
 
         return self.last_mrsi.spectrum(x, y, z)
 
@@ -99,7 +98,6 @@ class Controller:
             fft_spectrale :
             metabolite_extractor : 
 
-        Note : tous les traitements fonctionnement sans les params donnés, avec des valeurs par défaut pour tous les paramètres manquants
         """
         logger.debug(f"controller.py : upload_traitements, fichiers irm dispos : '{self.previous_irm}'")
         logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.previous_mrsi}'")
@@ -113,8 +111,7 @@ class Controller:
         result = {}
 
         for name, contenu in catalog.items():
-            instance = None
-            instance = self.previous_irm.get(name) or self.previous_mrsi.get(name) #l'instance du fichier concerné
+            instance = self.previous_irm.get(name) or self.previous_mrsi.get(name) # l'instance du fichier concerné
             
             if instance is None:
                 result[name] = {"error": "IRM/MRSI non trouvée. Vous essayez de faire un traitement sur un fichier jamais upload"}
@@ -131,7 +128,7 @@ class Controller:
                 continue
 
             # Compatibilité type des données (pas d'IRM dans le metabolite extractor)
-            if type_traitement == ("fft_spectrale" or "metabolite_extractor") and isinstance(instance, IRM):
+            if type_traitement in ["fft_spectrale", "metabolite_extractor"] and isinstance(instance, IRM):
                 result[name] = {"error": f"Type de traitement non compatible : {type_traitement} se fait uniquement sur MRSI"}
                 continue
 

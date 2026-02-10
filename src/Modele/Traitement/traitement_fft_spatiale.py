@@ -42,8 +42,6 @@ class TRAITEMENT_FFT_SPATIALE:
         elif isinstance(self.instance, MRSI):
             logger.debug(f"traitement_fft_spatiale.py : run() : le type est MRSI")
             
-            # Pour MRSI, on fait souvent la FFT sur la carte de puissance (voxel map actuelle)
-            # ou sur les données 4D? Le code original faisait sur la voxel map sommée.
             d = self.instance.data
             if d.ndim == 4:
                 volume = np.sum(np.abs(d), axis=-1)

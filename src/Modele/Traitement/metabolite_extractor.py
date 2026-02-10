@@ -7,18 +7,17 @@ logger = get_logger(__name__)
 
 class METABOLITE_EXTRACTOR:
     """
-    EN TRAVAUX, NE PAS UTILISER
     Extraction de métabolites voxel par voxel à partir d'une MRSI.
     Retourne des cartes 3D normalisées pour affichage front.
     """
-    # Valeurs attendues (ppm) (valeurs obtenues diapo 2 ref )
+    # Valeurs attendues (ppm)
     METABOLITES_VALEURS = { 
             "NAA": 2.01,
             "Cr": 3.02,
             "Cho": 3.22
     }
     
-    # Largeur de bande d'intégration en ppm (comment choisir ???)
+    # Largeur de bande d'intégration en ppm
     INTEGRATION_WIDTH = 0.2
 
     def __init__(self, mrsi_instance: MRSI, irm_instance=None):
@@ -28,7 +27,7 @@ class METABOLITE_EXTRACTOR:
             self.mrsi.load()
             
         # Tenter de récupérer les infos spectrales du header si possible
-        self.ppm_range = (10.0, -2.0) # convention décroissante souvent
+        self.ppm_range = (10.0, -2.0)
     
     def ppm_to_index(self, ppm_value, T):
         """
@@ -84,7 +83,7 @@ class METABOLITE_EXTRACTOR:
         if self.irm is None or self.irm.img is None:
             return mrsi_3d_map, None, None
 
-        logger.debug("Resampling MRSI to MRI grid (Bounding Box Strategy)...")
+        logger.debug("Resampling MRSI to MRI grid...")
         
         # 1. MRI Grid Shape & Affine
         mri_shape = self.irm.data.shape
@@ -98,12 +97,11 @@ class METABOLITE_EXTRACTOR:
         logger.debug(f"MRI Affine:\n{mri_affine}")
         logger.debug(f"Original MRSI Affine:\n{mrsi_affine}")
         
-        # --- FALLBACK ALIGNMENT CHECK ---
         # Check if MRSI affine is Identity (often means missing registration)
         # We check the 3x3 scaling/rotation part and the translation part
         is_identity = np.allclose(mrsi_affine, np.eye(4), atol=1e-3)
         if is_identity:
-            logger.warning("MRSI Affine is Identity! Attempting Fallback: Center Alignment with Header Scaling.")
+            logger.warning("MRSI Affine is Identity! Fallback: Center Alignment.")
             
             # 1. Apply Scaling from Header
             # Identity affine implies 1mm voxels. We must restore true voxel size.
@@ -111,9 +109,8 @@ class METABOLITE_EXTRACTOR:
                 sx, sy, sz = self.mrsi.img.header.get_zooms()[:3]
                 logger.info(f"Detected Voxel Size from Header: {sx:.2f} x {sy:.2f} x {sz:.2f} mm")
                 
-                # --- Dynamic Fit-to-Brain Strategy ---
                 # Determine Brain Bounding Box from MRI Data
-                logger.debug("Calculating Brain Bounding Box for Fit-to-Brain scaling...")
+                logger.debug("Calculating Brain Bounding Box...")
                 mri_data = self.irm.data
                 
                 # Threshold to find brain (skip background)
@@ -162,12 +159,8 @@ class METABOLITE_EXTRACTOR:
                     vy = (target_ratio * h_mm) / my
                     vz = (target_ratio * d_mm) / mz
                     
-                    # To keep voxels cubic (square on screen), take the minimum or average?
-                    # Usually spectroscopy voxels are roughly cubic.
-                    # Let's take the minimum to ensure it fits inside the smallest brain dimension.
                     final_sz = min(vx, vy, vz)
                     
-                    # Clamp to reasonable bounds (e.g. 5mm - 20mm)
                     final_sz = max(5.0, min(20.0, final_sz))
                     
                     logger.info(f"Dynamic Scaling: Forcing cubic voxel size {final_sz:.2f}mm to fit brain window.")
