@@ -6,16 +6,23 @@ from src.logger import get_logger
 
 logger = get_logger(__name__)
 
+#
+
 class TRAITEMENT_FFT_SPATIALE:
     """
     Post Traitement Test : Transformée de Fourier
     Applicable sur IRM et MRSI
     """
+    params = { #paramètres par défaut
+            "sigma" : 20,
+            "filtre" : "Passe-haut"
+            }
 
     def __init__(self, instance):
         self.instance = instance
         if hasattr(self.instance, "data") and self.instance.data is None:
             self.instance.load()
+        
 
     @staticmethod #Permet l'appel sans instance créée (car pas besoin de self)
     def get_catalog_entry():
@@ -41,12 +48,24 @@ class TRAITEMENT_FFT_SPATIALE:
             }
         }
 
-    def run(self, sigma: int = 20, filtre: str = "Passe-haut"):
+    #def run(self, sigma: int = params["sigma"], filtre: str = params["filtre"]):
+    def run(self, sigma: int = None, filtre: str = None):
         """
         Retourne le résultat FFT selon le type de données.
         sigma : largeur de la gaussienne pour filtrage
         filtre : True → passe-haut, False → passe-bas
         """
+        #MAJ paramètres (INDISPENSABLE ne pas oublier)
+        if sigma == None:
+            sigma = self.params["sigma"]
+        else:
+            self.params["sigma"] = sigma
+        if filtre == None:
+            filtre = self.params["filtre"]
+        else:
+            self.params["filtre"] = filtre
+
+        
         if filtre == "Passe-haut" :
             boo_filtre = True
         elif filtre == "Passe-bas":

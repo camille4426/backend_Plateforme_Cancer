@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
+from src.logger import get_logger
+
 from src.controller import Controller
 from src.database import init_db, get_db_connection
 from src.auth import (
@@ -11,6 +13,8 @@ from src.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_password_hash
 )
 import src.auth as auth
+
+logger = get_logger(__name__)  # logger spécifique au module controller.py
 
 # -----------------------------------------
 # Initialisation FastAPI + Controller
@@ -94,18 +98,20 @@ async def upload_mrsi(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        logger.debug("main.py : Démarrage traitement MRSI")
         return controller.upload_mrsi(fichier)
     except Exception as e:
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
 
-@app.get("/spectrum/{x}/{y}/{z}")
+@app.get("/spectrum/{name}/{x}/{y}/{z}")
 async def get_spectrum(
-    x: int, y: int, z: int, 
+    name : str, x: int, y: int, z: int, 
     current_user: User = Depends(get_current_user)
 ):
-    return controller.get_mrsi_spectrum(x, y, z)
+    logger.debug(f"main.py : Démarrage traitement spectrum MRSI name : {name}")
+    return controller.get_mrsi_spectrum(name, x, y, z)
 
 @app.post("/upload-json-dataset/")
 async def upload_json_dataset(

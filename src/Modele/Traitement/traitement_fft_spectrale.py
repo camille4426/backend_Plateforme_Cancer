@@ -10,7 +10,9 @@ class TRAITEMENT_FFT_SPECTRALE:
     Transformée de Fourier SPECTRALE pour MRSI.
     Transforme en spectres fréquentiels (ppm).
     """
-
+    params = { #paramètres par défaut
+            }
+    
     def __init__(self, instance: MRSI):
         if not isinstance(instance, MRSI):
             raise ValueError("TRAITEMENT_FFT_SPECTRAL ne s'applique que sur MRSI")

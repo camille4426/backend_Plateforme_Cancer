@@ -3,6 +3,7 @@ from fastapi import File
 from fastapi import UploadFile
 
 from src.logger import get_logger
+from src.sessionStorage import SESSIONSTORAGE
 from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
 from src.Modele.Traitement.traitement_fft_spatiale import TRAITEMENT_FFT_SPATIALE
@@ -27,14 +28,7 @@ class Controller:
         self.app = app
         logger.info("controller.py : Controleur initialisé")
         
-        self.previous_irm = {} 
-        self.previous_mrsi = {}
-        self.last_irm = None
-        self.last_mrsi = None
-        # = Dictionnaires de toutes les irms et mrsi utilisées pendant la session courante 
-        # clé = nom du fichier, valeur = classe IRM ou MRSI correspondante
-        
-        
+        self.storage = SESSIONSTORAGE()
 
     def get_json_by_patient(self, json_data: dict):
         """
@@ -49,36 +43,45 @@ class Controller:
             logger.error(f"controller.py : Erreur traitement JSON - {e}")
             raise e
 
+    # -----------------------------------------
+    #   Upload
+    # -----------------------------------------
+
     def upload_irm(self, fichier: UploadFile):
         logger.debug(f"controller.py (upload_irm) : Démarrage du traitement IRM - fichier '{fichier.filename}'")
-        self.previous_irm[fichier.filename] = IRM(fichier)
-        self.last_irm = self.previous_irm[fichier.filename]
+        if self.storage.original_exists(fichier.filename) :
+            instance = self.storage.get_original(fichier.filename)
+        else:
+            instance = IRM(fichier)
+            self.storage.add_original(fichier.filename, instance)
         
         # load() est appelé automatiquement par get_all_slices si data est None
-        payload = self.previous_irm[fichier.filename].get_all_slices()
+        payload = instance.get_all_slices()
 
-        logger.info("controller.py (upload_irm) : Traitement IRM terminé")
+        logger.info(f"controller.py (upload_irm) : Traitement IRM terminé stockage : {self.storage.info()}")
         return payload
-
 
     def upload_mrsi(self, fichier: UploadFile):
         logger.debug("controller.py : Démarrage traitement MRSI")
-        self.previous_mrsi[fichier.filename] = MRSI(fichier.filename, fichier)
-        self.last_mrsi = self.previous_mrsi[fichier.filename]
+
+        if self.storage.original_exists(fichier.filename) :
+            instance = self.storage.get_original(fichier.filename)
+        else:
+            instance = MRSI(fichier.filename, fichier)
+            self.storage.add_original(fichier.filename, instance)
+
         # On renvoie toutes les coupes pour la navigation 3D
-        payload = self.previous_mrsi[fichier.filename].get_all_voxel_maps()
-        logger.info("controller.py : Traitement MRSI terminé")
+        payload = instance.get_all_voxel_maps()
+        logger.info(f"controller.py : Traitement MRSI terminé stockage : {self.storage.info()}")
         return payload
 
 
-    def get_mrsi_spectrum(self, x: int, y: int, z: int):
+    def get_mrsi_spectrum(self, name : str, x: int, y: int, z: int):
         logger.debug("controller.py : Démarrage traitement MRSI spectre")
-        if not self.last_mrsi:
+        if not self.storage.original_exists(name) :
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
-        
-        
 
-        return self.last_mrsi.spectrum(x, y, z)
+        return self.storage.get_original(name).spectrum(x, y, z)
 
     
     # -----------------------------------------
@@ -89,7 +92,7 @@ class Controller:
         """
         Permet au front d'obtenir la liste des traitements avec les paramètres demandés pour l'affichage
         """
-        logger.debug("controller.py : get_catalog")
+        logger.debug("controller.py : get_catalog début")
         catalog = {}
         for key, cls in TRAITEMENT_MAP.items():
             entry = getattr(cls, "get_catalog_entry", None)
@@ -101,7 +104,7 @@ class Controller:
                     "type": [],  # inconnu
                     "params": {}
                 }
-        logger.debug(f"controller.py : fin get_catalog, résultat : '{catalog}'")
+        logger.info("controller.py : get_catalog fini")
         return catalog
 
 
@@ -127,15 +130,12 @@ class Controller:
             metabolite_extractor : 
 
         """
-        logger.debug(f"controller.py : upload_traitements, fichiers irm dispos : '{self.previous_irm}'")
-        logger.debug(f"controller.py : upload_traitements, fichiers mrsi dispos : '{self.previous_mrsi}'")
         logger.debug(f"controller.py : upload_traitements, catalogue reçu : '{catalog}'")
 
-        
         result = {}
 
         for name, contenu in catalog.items():
-            instance = self.previous_irm.get(name) or self.previous_mrsi.get(name) # l'instance du fichier concerné
+            instance = self.storage.get_original(name) # l'instance du fichier concerné
             
             if instance is None:
                 result[name] = {"error": "IRM/MRSI non trouvée. Vous essayez de faire un traitement sur un fichier jamais upload"}
@@ -157,10 +157,20 @@ class Controller:
                 continue
 
             params = contenu.get("params", {})
-
+            logger.debug(f"controller.py : upload_traitements params envoyés : {params}")
             traitement = classe(instance) #traitement est de la classe associée dans TRAITEMENT_MAP
 
-            result[name] = traitement.run(**params) #Exécution du traitement                  
+            try :
+                res = traitement.run(**params) #Exécution du traitement
+                res_stockage = { 
+                    "params" : traitement.params, #bien faire après le run sinon ce sera faux
+                    "data" : res 
+                }
+                self.storage.add_traitement(name, type_traitement, res_stockage)
+                result[name] = res
+            except Exception as e:
+                result[name] = {"error": str(e)}
+                logger.info(f"controller.py : upload_traitements : ERREUR : {str(e)}")    
 
-        logger.info("controller.py : upload_traitements : traitement terminé")
+        logger.info(f"controller.py : upload_traitements : traitement terminé stockage : {self.storage.info()}")
         return result

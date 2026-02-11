@@ -10,6 +10,10 @@ class METABOLITE_EXTRACTOR:
     Extraction de métabolites voxel par voxel à partir d'une MRSI.
     Retourne des cartes 3D normalisées pour affichage front.
     """
+    params = { #paramètres par défaut
+        "metas" : ["NAA", "Cr", "Cho"]
+            }
+   
     # Valeurs attendues (ppm)
     METABOLITES_VALEURS = { 
             "NAA": 2.01,
@@ -47,13 +51,16 @@ class METABOLITE_EXTRACTOR:
             }
         }
 
-    def run(self, metabolites : list | None = None):
+    def run(self, metabolites : list = None):
         """
         Extraction de métabolites choisis (entre NAA, Cr, Cho).
         """
+
         # Par défaut : tous
         if metabolites is None:
-            metabolites = list(self.METABOLITES_VALEURS.keys())
+            metabolites = self.params["metas"]
+        else:
+            self.params["metas"] = metabolites
 
         results = {}
         
