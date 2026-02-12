@@ -119,10 +119,19 @@ class MRSI:
             vm = np.sum(np.abs(d), axis=-1)
 
         X, Y, Z = vm.shape
+        
+        # Normalize to 0-255 range
+        vm = np.asarray(vm, dtype=np.float32)
+        vmin, vmax = np.nanmin(vm), np.nanmax(vm)
+        if vmin == vmax:
+             vm_norm = np.zeros_like(vm, dtype=np.uint8)
+        else:
+             vm_norm = ((vm - vmin) / (vmax - vmin) * 255).astype(np.uint8)
+
         return {
             "type": "MRSI",
             "nom": self.nom,
-            "data_b64": base64.b64encode(vm.astype(np.uint8).tobytes()).decode('utf-8'),
+            "data_b64": base64.b64encode(vm_norm.tobytes()).decode('utf-8'),
             "shape": [int(X), int(Y), int(Z)],
             "method": method,
             "affine": [ [float(v) for v in row] for row in self.img.affine ] if self.img is not None else None,
