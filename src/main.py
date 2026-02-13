@@ -170,8 +170,17 @@ async def run_traitements(catalog: dict = Body(...)):
 @app.post("/storage/previous")
 async def get_previous(catalog: dict = Body(...)):
     """
-    XX
-    """
+        catalog : dictionnaire
+        {
+            "MsrGB01_PUI_20110324_0000.nii.gz": {
+                {"type_traitement": "metabolite_extractor", "params": {"metabolites": ["NAA","Cr"]}}
+            },
+            "MsrGB01_PUI_20110325_0000.nii.gz": []
+        }
+        Récupère :
+        - Si liste vide -> original
+        - Sinon retourne le traitement correspondant
+        """
     try:
         return controller.get_previous(catalog)
     except Exception as e:
