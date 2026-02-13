@@ -61,9 +61,19 @@ class SESSIONSTORAGE:
         """Retourne l'instance IRM/MRSI originale"""
         return self._data.get(original_name, {}).get("original")
 
-    def get_traitement(self, original_name: str, traitement_type_name: str):
-        """Retourne le traitement choisi"""
-        return self._data.get(original_name, {}).get("versions", {}).get(traitement_type_name, [])
+    def get_traitement(self, original_name: str, traitement_type: str, params : dict = None):
+        """Retourne le traitement choisi (résultat comme data affichable par le front directement)"""
+        traitements = self._data.get(original_name, {}).get("versions", {}).get(traitement_type, [])
+
+        if not traitements:
+            return {"error": f"type_traitement non trouvé : {traitement_type}"}
+        
+        # Cherche un traitement correspondant exactement aux params
+        match = next((t for t in traitements if t["params"] == params), None)
+        if not match:
+            return {"error": f"aucune correspondance avec ce type de traitement et ces paramètres : {traitement_type} : {params}"}
+        else:
+            return match["data"]
 
     def get_all_traitements(self, original_name: str):
         """Retourne tous les traitements faits sur un IRM/MRSI choisi"""
@@ -71,8 +81,8 @@ class SESSIONSTORAGE:
     
     def get_latest_traitement(self, original_name: str, traitement_type_name: str):
         """Retourne le dernier traitement de ce type fait"""
-        versions = self.get_traitement(original_name, traitement_type_name)
-        return versions[-1] if versions else None
+        traitements = self._data.get(original_name, {}).get("versions", {}).get(traitement_type_name, [])
+        return traitements[-1] if traitements else None
 
 
     # Récupération des noms

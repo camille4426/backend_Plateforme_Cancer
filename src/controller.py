@@ -82,7 +82,53 @@ class Controller:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
 
         return self.storage.get_original(name).spectrum(x, y, z)
+    
 
+    def get_previous(self, catalog : dict):
+        """
+        catalog : dictionnaire
+        {
+            "MsrGB01_PUI_20110324_0000.nii.gz": {
+                {"type_traitement": "metabolite_extractor", "params": {"metabolites": ["NAA","Cr"]}}
+            },
+            "MsrGB01_PUI_20110325_0000.nii.gz": []
+        }
+        Récupère :
+        - Si liste vide -> original
+        - Sinon retourne le traitement correspondant
+        """
+        logger.debug(f"controller.py : get_previous, catalogue reçu : '{catalog}'")
+
+        result = {}
+        for ori_name, traitements in catalog.items():
+
+            if not self.storage.original_exists(ori_name):
+                result[ori_name] = {"error": f"Original inconnu : {ori_name}"}
+                continue
+
+            if not traitements: # Si pas de traitement donnés on retourne l'original
+                instance_ori = self.storage.get_original(ori_name)
+
+                if isinstance(instance_ori, IRM):
+                    result[ori_name] = instance_ori.get_all_slices()
+                elif isinstance(instance_ori, MRSI):
+                    result[ori_name] = instance_ori.get_all_voxel_maps()
+                else:
+                    result[ori_name] = {"error": f"L'original n'est pas de type IRM ou MRSI"}
+                continue
+                
+            result[ori_name] = []
+            for t in traitements:
+                type_traitement = t.get("type_traitement")
+                params = t.get("params")
+
+                if type_traitement is None:
+                    result[ori_name].append({"error": "type_traitement manquant"})
+                    continue
+
+                result[ori_name].append(self.storage.get_traitement(ori_name, type_traitement, params))
+        
+        return result
     
     # -----------------------------------------
     #   Méthodes pour le post-traitement
@@ -116,7 +162,7 @@ class Controller:
                 "type_traitement": "fft_spatiale",
                 "params": {"sigma": 20, "filtre": True}
             },
-            "MsrGB01_PUI_20110324_0000.nii.gz": {
+            "MsrGB01_PUI_20110324_0001.nii.gz": {
                 "type_traitement": "metabolite_extractor",
                 "params": {"metabolites": ["NAA","Cr"]}
             }

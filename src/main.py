@@ -124,7 +124,7 @@ async def upload_json_dataset(
         import traceback
         traceback.print_exc()
         return {"error": str(e)}
-
+    
 # -----------------------------------------
 # Traitement Routes
 # -----------------------------------------
@@ -158,6 +158,22 @@ async def run_traitements(catalog: dict = Body(...)):
     """
     try:
         return controller.upload_traitements(catalog)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+    
+
+# -----------------------------------------
+# Storage Routes
+# -----------------------------------------
+@app.post("/storage/previous")
+async def get_previous(catalog: dict = Body(...)):
+    """
+    XX
+    """
+    try:
+        return controller.get_previous(catalog)
     except Exception as e:
         import traceback
         traceback.print_exc()
