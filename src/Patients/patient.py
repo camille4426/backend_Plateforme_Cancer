@@ -1,6 +1,9 @@
 import re
 from collections import defaultdict
 
+from src.logger import get_logger
+logger = get_logger(__name__)  # logger spécifique au module controller.py
+
 def organize_files_by_patient(input_json: dict) -> dict:
     """
     Transforme le JSON reçu du front en un JSON ordonné :
@@ -14,28 +17,23 @@ def organize_files_by_patient(input_json: dict) -> dict:
     patients_dict = defaultdict(lambda: defaultdict(list))
     fichiers_non_reconnus = []
 
-    regex = r"^(?P<type_analyse>MsrGB(_MRSI)?)_?(?P<id_patient>\d{2}_[A-Z]{3})_(?P<date>\d{8})_(?P<modalites_IRM>\d{4})?([^\.]*)(?P<extension>.*)"
+    regex = r"^(?P<type_analyse>MsrGB(_MRSI)?)_?(?P<id_patient>\d{2}_[A-Z]{3})_(?P<date>\d{8})_?(?P<modalites_IRM>\d{4})?([^\.]*)(?P<extension>.*)"
 
     for f in files:
         nom_fichier = f["name"]
-
+        
         match = re.search(regex, nom_fichier)
         if not match:
+            logger.info(f"patient.py : non reconnu : {nom_fichier}")
             fichiers_non_reconnus.append(nom_fichier)
             continue
+        logger.info(f"patient.py : reconnu : {nom_fichier}")
         
         patient_id = match.group("id_patient")
         date = match.group("date")
-          
-        ext = match.group("extension")
-        if ext == ".nii":
-            type = "MRSI"
-        elif ext == ".nii.gz":
-            type = "IRM"
-        else:
-            type = "inconnu"
        
         modalites_IRM = match.group("modalites_IRM")
+        #logger.info(f"patient.py : Mod : {modalites_IRM} nom : {nom_fichier}")
         if modalites_IRM == "0000":
             modalites_IRM = "T1"
         elif modalites_IRM == "0001":
@@ -46,6 +44,19 @@ def organize_files_by_patient(input_json: dict) -> dict:
             modalites_IRM = "Flair"
         else:
             modalites_IRM = None
+
+        ext = match.group("extension")
+        if ext == ".nii":
+            type = "MRSI"
+        elif ext == ".nii.gz":
+            if modalites_IRM == None:
+                logger.info(f"patient.py : Mask trouvé : {match}")
+                type = "Mask"
+            else:
+                #logger.info(f"patient.py : IRM trouvé : {match}")
+                type = "IRM"
+        else:
+            type = "inconnu"
         
         file_info = {
             "relative_path": f["relativePath"],
