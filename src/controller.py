@@ -184,7 +184,7 @@ class Controller:
             instance = self.storage.get_original(name) # l'instance du fichier concerné
             
             if instance is None:
-                result[name] = {"error": "IRM/MRSI non trouvée. Vous essayez de faire un traitement sur un fichier jamais upload"}
+                result[name] = {"error": "IRM/MRSI non trouvée. Placez vous sur l'original ou la version que vous voulez modifier"}
                 continue
             
             type_traitement = contenu.get("type_traitement")
