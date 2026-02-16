@@ -24,10 +24,8 @@ def organize_files_by_patient(input_json: dict) -> dict:
         
         match = re.search(regex, nom_fichier)
         if not match:
-            logger.info(f"patient.py : non reconnu : {nom_fichier}")
             fichiers_non_reconnus.append(nom_fichier)
             continue
-        logger.info(f"patient.py : reconnu : {nom_fichier}")
         
         patient_id = match.group("id_patient")
         date = match.group("date")
