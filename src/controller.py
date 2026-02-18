@@ -8,6 +8,9 @@ from src.Modele.irm import IRM
 from src.Modele.mrsi import MRSI
 from src.Modele.Traitement.traitement_fft_spatiale import TRAITEMENT_FFT_SPATIALE
 from src.Modele.Traitement.traitement_fft_spectrale import TRAITEMENT_FFT_SPECTRALE
+import numpy as np
+import base64
+
 from src.Modele.Traitement.metabolite_extractor import METABOLITE_EXTRACTOR
 
 
@@ -220,3 +223,64 @@ class Controller:
 
         logger.info(f"controller.py : upload_traitements : traitement terminé stockage : {self.storage.info()}")
         return result
+
+
+    def get_fusion(self, mri_name: str, mrsi_name: str, force_center: bool = False, mix_method: str = "sum_abs", channel: int = None):
+        """
+        Génère une carte de chaleur MRSI rééchantillonnée sur la géométrie de l'IRM.
+        """
+        logger.debug(f"controller.py (get_fusion) : mri={mri_name}, mrsi={mrsi_name}, force={force_center}, channel={channel}")
+        
+        if not self.storage.original_exists(mri_name):
+            return {"error": f"IRM introuvable: {mri_name}"}
+        if not self.storage.original_exists(mrsi_name):
+            return {"error": f"MRSI introuvable: {mrsi_name}"}
+            
+        irm_instance = self.storage.get_original(mri_name)
+        mrsi_instance = self.storage.get_original(mrsi_name)
+        
+        if not isinstance(irm_instance, IRM):
+            return {"error": f"Le fichier {mri_name} n'est pas une IRM"}
+        if not isinstance(mrsi_instance, MRSI):
+            return {"error": f"Le fichier {mrsi_name} n'est pas une MRSI"}
+            
+        # Ensure data is loaded
+        if irm_instance.data is None: irm_instance.load()
+        if mrsi_instance.data is None: mrsi_instance.load()
+        
+        # Get MRI geometry
+        if irm_instance.img is None:
+             return {"error": "IRM image obj None"}
+             
+        mri_shape = irm_instance.data.shape
+        # Handle 4D MRI (take first volume)
+        if len(mri_shape) == 4:
+            mri_shape = mri_shape[:3]
+            
+        mri_affine = irm_instance.img.affine
+        
+        # Perform Resampling
+        try:
+            resampled_data, transform_matrix = mrsi_instance.resample_to_mri(mri_shape, mri_affine, force_center=force_center, channel=channel)
+        except Exception as e:
+            logger.error(f"Fusion error: {e}")
+            return {"error": str(e)}
+            
+        # Normalize to uint8 0-255 for transport/display
+        vmin, vmax = np.nanmin(resampled_data), np.nanmax(resampled_data)
+        if vmin == vmax:
+             resampled_norm = np.zeros_like(resampled_data, dtype=np.uint8)
+        else:
+             resampled_norm = ((resampled_data - vmin) / (vmax - vmin) * 255).astype(np.uint8)
+             
+        # Encode
+        return {
+            "type": "FUSION",
+            "mri": mri_name,
+            "mrsi": mrsi_name,
+            "shape": list(mri_shape),
+            "data_b64": base64.b64encode(resampled_norm.tobytes()).decode('utf-8'),
+            "affine": [ [float(v) for v in row] for row in mri_affine ],
+            "info": f"Fused {mrsi_name} onto {mri_name}. ForceCenter={force_center}",
+            "transform_matrix": [ [float(v) for v in row] for row in transform_matrix ]
+        }

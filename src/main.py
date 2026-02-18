@@ -76,6 +76,14 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 # -----------------------------------------
 # Upload Routes
 # -----------------------------------------
+@app.get("/fusion/")
+async def get_fusion(mri: str, mrsi: str, force_center: bool = False, channel: int = None):
+    return controller.get_fusion(mri, mrsi, force_center, channel=channel)
+
+@app.get("/catalog/")
+def catalog_root():
+    return {"status": "ok", "message": "API backend Plateforme Cancer running"}
+
 @app.get("/")
 def root():
     return {"status": "ok", "message": "API backend Plateforme Cancer running"}
