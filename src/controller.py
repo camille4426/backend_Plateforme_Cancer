@@ -164,7 +164,7 @@ class Controller:
             "MsrGB01_PUI_20110324_0000.nii.gz": {
                 {"type_traitement": "metabolite_extractor", "params": {"metabolites": ["NAA","Cr"]}}
             },
-            "MsrGB01_PUI_20110325_0000.nii.gz": []
+            "MsrGB01_PUI_20110325_0000.nii.gz": {}
         }
         Récupère :
         - Si liste vide -> original
@@ -203,6 +203,34 @@ class Controller:
         
         return result
     
+    def remove_from_memory(self, catalog : dict):
+        """
+        catalog : dictionnaire
+        {
+            "MsrGB01_PUI_20110324_0000.nii.gz": {
+                {"type_traitement": "metabolite_extractor", "params": {"metabolites": ["NAA","Cr"]}}
+            },
+            "MsrGB01_PUI_20110325_0000.nii.gz": {}
+        }
+        
+        Résultat :
+        - Si liste vide -> supprime l'original
+        - Sinon supprime le traitement correspondant
+        (-> on donne le nom de l'original et les détails du traitement si concerné)
+        """
+        errors = []
+        for original_name, traitement in catalog.items():
+            error = self.storage.remove(original_name, traitement)
+            if error:
+                errors.append(error)
+                
+        if not errors:
+            return "Success"
+        else:
+            return errors
+            
+
+    
     def upload_memoire(self, fichiers: list):
         """
         List attendue :
@@ -215,7 +243,7 @@ class Controller:
         """
         logger.debug(f"controller.py (upload_memoire) : Démarrage du traitement d'upload en mémoire")
         
-        result = {}
+        result = []
 
         for i, element in enumerate(fichiers):
             type = element.get(0)

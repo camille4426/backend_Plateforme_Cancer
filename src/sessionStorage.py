@@ -109,9 +109,38 @@ class SESSIONSTORAGE:
     # Suppression
     # ===============================
 
-    def remove(self, original_name: str):
-        """Supprime un IRM/MRSI avec tous ses traitements"""
-        self._data.pop(original_name, None)
+    def remove(self, original_name: str, traitement : dict):
+        """
+        Supprime :
+        - Si traitement vide -> supprime l'original
+        - Sinon supprime uniquement le IRM/MRSI avec tous ses traitements"""
+        if not self.original_exists(original_name):
+            return {"error" : f"ce nom de l'original ne correspond à aucun fichier en mémoire : {original_name}"}
+        
+        if not traitement:
+            self._data.pop(original_name, None)
+            return
+        
+        type_traitement = traitement.get("type_traitement")
+        params = traitement.get("params", {})
+        
+        traitements = self._data.get(original_name, {}).get("versions", {}).get(type_traitement, [])
+
+        if not traitements:
+            return {"error": f"type_traitement non trouvé : {type_traitement}"}
+        
+        # Cherche un traitement correspondant exactement aux params
+        match_index = next((i for i,t in enumerate(traitements) if t["params"] == params), None)
+        if match_index is None:
+            return {"error": f"aucune correspondance avec ce type de traitement et ces paramètres : {type_traitement} : {params}"}
+        
+        traitements.pop(match_index) #suppr traitement spécifique
+
+        # Si plus de traitements pour ce type, supprimer la clé
+        if not traitements:
+            self._data[original_name]["versions"].pop(type_traitement)
+        
+
 
     def clear(self):
         """Réinitialisation de la mémoire"""
