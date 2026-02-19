@@ -2,19 +2,22 @@
 from fastapi import File
 from fastapi import UploadFile
 
-from src.logger import get_logger
-from src.sessionStorage import SESSIONSTORAGE
-from src.Modele.irm import IRM
-from src.Modele.mrsi import MRSI
-from src.Modele.Traitement.traitement_fft_spatiale import TRAITEMENT_FFT_SPATIALE
-from src.Modele.Traitement.traitement_fft_spectrale import TRAITEMENT_FFT_SPECTRALE
 import numpy as np
 import base64
 
-from src.Modele.Traitement.metabolite_extractor import METABOLITE_EXTRACTOR
+from src.logger import get_logger
+from src.sessionStorage import SESSIONSTORAGE
 
+from src.Modele.irm import IRM
+from src.Modele.mrsi import MRSI
 
 from src.Patients.patient import organize_files_by_patient
+
+from src.Modele.Traitement.traitement_fft_spatiale import TRAITEMENT_FFT_SPATIALE
+from src.Modele.Traitement.traitement_fft_spectrale import TRAITEMENT_FFT_SPECTRALE
+from src.Modele.Traitement.metabolite_extractor import METABOLITE_EXTRACTOR
+
+from src.Modele.Prediction.test_predict import TEST_PREDICT
 
 logger = get_logger(__name__)  # logger spécifique au module controller.py
 
@@ -22,6 +25,10 @@ TRAITEMENT_MAP =  { #Liste des traitements disponibles, chaque classe associée 
     "fft_spatiale": TRAITEMENT_FFT_SPATIALE,
     "fft_spectrale": TRAITEMENT_FFT_SPECTRALE,
     "metabolite_extractor": METABOLITE_EXTRACTOR
+}
+
+PREDICTION_MAP =  { #Liste des prédictions disponibles à partir d'exams complets fournis
+    "predict1": TEST_PREDICT,
 }
 
 
@@ -85,8 +92,71 @@ class Controller:
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
 
         return self.storage.get_original(name).spectrum(x, y, z)
+
+    def get_fusion(self, mri_name: str, mrsi_name: str, force_center: bool = False, mix_method: str = "sum_abs", channel: int = None):
+        """
+        Génère une carte de chaleur MRSI rééchantillonnée sur la géométrie de l'IRM.
+        """
+        logger.debug(f"controller.py (get_fusion) : mri={mri_name}, mrsi={mrsi_name}, force={force_center}, channel={channel}")
+        
+        if not self.storage.original_exists(mri_name):
+            return {"error": f"IRM introuvable: {mri_name}"}
+        if not self.storage.original_exists(mrsi_name):
+            return {"error": f"MRSI introuvable: {mrsi_name}"}
+            
+        irm_instance = self.storage.get_original(mri_name)
+        mrsi_instance = self.storage.get_original(mrsi_name)
+        
+        if not isinstance(irm_instance, IRM):
+            return {"error": f"Le fichier {mri_name} n'est pas une IRM"}
+        if not isinstance(mrsi_instance, MRSI):
+            return {"error": f"Le fichier {mrsi_name} n'est pas une MRSI"}
+            
+        # Ensure data is loaded
+        if irm_instance.data is None: irm_instance.load()
+        if mrsi_instance.data is None: mrsi_instance.load()
+        
+        # Get MRI geometry
+        if irm_instance.img is None:
+             return {"error": "IRM image obj None"}
+             
+        mri_shape = irm_instance.data.shape
+        # Handle 4D MRI (take first volume)
+        if len(mri_shape) == 4:
+            mri_shape = mri_shape[:3]
+            
+        mri_affine = irm_instance.img.affine
+        
+        # Perform Resampling
+        try:
+            resampled_data, transform_matrix = mrsi_instance.resample_to_mri(mri_shape, mri_affine, force_center=force_center, channel=channel)
+        except Exception as e:
+            logger.error(f"Fusion error: {e}")
+            return {"error": str(e)}
+            
+        # Normalize to uint8 0-255 for transport/display
+        vmin, vmax = np.nanmin(resampled_data), np.nanmax(resampled_data)
+        if vmin == vmax:
+             resampled_norm = np.zeros_like(resampled_data, dtype=np.uint8)
+        else:
+             resampled_norm = ((resampled_data - vmin) / (vmax - vmin) * 255).astype(np.uint8)
+             
+        # Encode
+        return {
+            "type": "FUSION",
+            "mri": mri_name,
+            "mrsi": mrsi_name,
+            "shape": list(mri_shape),
+            "data_b64": base64.b64encode(resampled_norm.tobytes()).decode('utf-8'),
+            "affine": [ [float(v) for v in row] for row in mri_affine ],
+            "info": f"Fused {mrsi_name} onto {mri_name}. ForceCenter={force_center}",
+            "transform_matrix": [ [float(v) for v in row] for row in transform_matrix ]
+        }
     
 
+    # -----------------------------------------
+    #   Méthodes pour le stockage
+    # -----------------------------------------
     def get_previous(self, catalog : dict):
         """
         catalog : dictionnaire
@@ -133,6 +203,43 @@ class Controller:
         
         return result
     
+    def upload_memoire(self, fichiers: list):
+        """
+        List attendue :
+        [
+            ["IRM", UploadFile],
+            ["IRM", UploadFile],
+            ["MRSI", UploadFile]
+        ]
+        List de list : Chaque fichier en UploadFile avec son type devant
+        """
+        logger.debug(f"controller.py (upload_memoire) : Démarrage du traitement d'upload en mémoire")
+        
+        result = {}
+
+        for i, element in enumerate(fichiers):
+            type = element.get(0)
+            fichier = element.get(1)
+            if type != ("IRM" | "MRSI"):
+                result.append({"error" : f"Fichier indice {i} : le type donné n'est pas 'IRM' ou 'MRSI' mais : '{type}'"})
+            if isinstance(fichier, UploadFile):
+                result.append({"error" : f"Fichier indice {i} : le fichier donné n'est pas un UploadFile"})
+
+            if not self.storage.original_exists(fichier.filename) :
+                if type == "IRM":
+                    instance = IRM(fichier)
+                    self.storage.add_original(fichier.filename, instance)
+                elif type == "MRSI":
+                    instance = MRSI(fichier.filename, fichier)
+                    self.storage.add_original(fichier.filename, instance)
+
+        if not result:
+            result.append("Success")
+        
+        logger.info(f"controller.py (upload_irm_memoire) : Traitement terminé stockage : {self.storage.info()}")
+        return result
+
+
     # -----------------------------------------
     #   Méthodes pour le post-traitement
     # -----------------------------------------
@@ -225,62 +332,67 @@ class Controller:
         return result
 
 
-    def get_fusion(self, mri_name: str, mrsi_name: str, force_center: bool = False, mix_method: str = "sum_abs", channel: int = None):
+    # -----------------------------------------
+    #   Méthodes pour la prédiction à partir d'exams
+    # -----------------------------------------
+    def get_prediction_from_exam(self, list_dict : list):
         """
-        Génère une carte de chaleur MRSI rééchantillonnée sur la géométrie de l'IRM.
-        """
-        logger.debug(f"controller.py (get_fusion) : mri={mri_name}, mrsi={mrsi_name}, force={force_center}, channel={channel}")
-        
-        if not self.storage.original_exists(mri_name):
-            return {"error": f"IRM introuvable: {mri_name}"}
-        if not self.storage.original_exists(mrsi_name):
-            return {"error": f"MRSI introuvable: {mrsi_name}"}
-            
-        irm_instance = self.storage.get_original(mri_name)
-        mrsi_instance = self.storage.get_original(mrsi_name)
-        
-        if not isinstance(irm_instance, IRM):
-            return {"error": f"Le fichier {mri_name} n'est pas une IRM"}
-        if not isinstance(mrsi_instance, MRSI):
-            return {"error": f"Le fichier {mrsi_name} n'est pas une MRSI"}
-            
-        # Ensure data is loaded
-        if irm_instance.data is None: irm_instance.load()
-        if mrsi_instance.data is None: mrsi_instance.load()
-        
-        # Get MRI geometry
-        if irm_instance.img is None:
-             return {"error": "IRM image obj None"}
-             
-        mri_shape = irm_instance.data.shape
-        # Handle 4D MRI (take first volume)
-        if len(mri_shape) == 4:
-            mri_shape = mri_shape[:3]
-            
-        mri_affine = irm_instance.img.affine
-        
-        # Perform Resampling
-        try:
-            resampled_data, transform_matrix = mrsi_instance.resample_to_mri(mri_shape, mri_affine, force_center=force_center, channel=channel)
-        except Exception as e:
-            logger.error(f"Fusion error: {e}")
-            return {"error": str(e)}
-            
-        # Normalize to uint8 0-255 for transport/display
-        vmin, vmax = np.nanmin(resampled_data), np.nanmax(resampled_data)
-        if vmin == vmax:
-             resampled_norm = np.zeros_like(resampled_data, dtype=np.uint8)
-        else:
-             resampled_norm = ((resampled_data - vmin) / (vmax - vmin) * 255).astype(np.uint8)
-             
-        # Encode
-        return {
-            "type": "FUSION",
-            "mri": mri_name,
-            "mrsi": mrsi_name,
-            "shape": list(mri_shape),
-            "data_b64": base64.b64encode(resampled_norm.tobytes()).decode('utf-8'),
-            "affine": [ [float(v) for v in row] for row in mri_affine ],
-            "info": f"Fused {mrsi_name} onto {mri_name}. ForceCenter={force_center}",
-            "transform_matrix": [ [float(v) for v in row] for row in transform_matrix ]
+         entrée attendue : exams : dictionnaire
+        {
+            "type_traitement": "NOM_PREDICTION",
+            "fichiers": ["fich1_nom", "fich2_nom", "fich3_nom"]
         }
+         Possibilité d'ajouter params si besoin plus tard :
+        "params": {
+                "param1": valeur,
+                "param2": valeur
+            }
+        """
+        logger.debug(f"controller.py : get_prediction_from_exam, entrée reçue : '{list_dict}'")
+
+        result = []
+
+        for dict in list_dict:
+            noms_fichiers = dict.get("fichiers")
+            type_predict = dict.get("type_traitement")
+            if not noms_fichiers:
+                result.append({"error": "aucun nom de fichier fourni"})
+                continue
+            if not type_predict:
+                result.append({"error": "type_traitement manquant"})
+                continue
+
+            # Vérification si tous les fichiers ont déjà été upload.
+            # Si des fichiers n'ont jamais été upload :
+            # on renvoie la liste des fichiers manquants pour que le front envoie ces fichiers en entier pour enregistrement mémoire
+            # -> Important : le front devra à nous appeler cette fonction une fois l'enregistrement en mémoire des fichiers manquants fait
+            fichiers_manquants = []
+            for nom in noms_fichiers:
+                if not self.storage.original_exists(nom): #Si le fichier n'est pas un exam original déjà upload
+                    fichiers_manquants.append(nom)
+            
+            if fichiers_manquants != []:
+                result.append({
+                    "Fichiers_memoire": "manquants",
+                    "fichiers_manquants": fichiers_manquants
+                })
+            else:  #Si tous les fichiers sont en mémoire on exécute la prédiction
+                classe = PREDICTION_MAP.get(type_predict)
+                if classe is None:
+                    result.append({"error": f"Type de traitement inconnu : {type_predict}"})
+                    continue
+                
+                try :
+                    predict = classe(noms_fichiers)
+                    res = predict.run()
+                    # Note mémoire Alex, NE PAS SUPPRIMER SVP !
+                    # A FAIRE ICI QUAND CA SERA SUR QUE CA MARCHE : mettre le résultat du predict dans le stockage, 
+                    # à voir comment (nouveau dico avec noms en key et predict en valeur ?)
+                    result.append({
+                    "Fichiers_memoire": "OK",
+                    "Result": res
+                })
+                except Exception as e:
+                    result.append({"error": str(e)})
+
+        return result

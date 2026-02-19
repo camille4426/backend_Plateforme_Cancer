@@ -171,6 +171,42 @@ async def run_traitements(catalog: dict = Body(...)):
         traceback.print_exc()
         return {"error": str(e)}
     
+# -----------------------------------------
+# Prediction via exams Routes
+# -----------------------------------------
+@app.post("/predict")
+async def get_prediction_from_exam(exams: list = Body(...)):
+    """
+        entrée attendue : exams : list de dictionnaires
+        [
+            {
+                "type_traitement": "NOM_PREDICTION",
+                "fichiers": ["fich1_nom", "fich2_nom", "fich3_nom"]
+            },
+            {
+                "type_traitement": "NOM_PREDICTION",
+                "fichiers": ["fich1_nom", "fich2_nom", "fich3_nom"]
+            }
+        ]
+
+        Retourne dictionnaire pour chaque prédiction demandée :
+        {
+            "Fichiers_memoire": "manquants",
+            "fichiers_manquants": ["fich1_nom", "fich3_nom"]
+        }
+        ou
+        {
+            "Fichiers_memoire": "OK",
+            "Result": Resultat
+        }
+       
+        """
+    try:
+        return controller.get_prediction_from_exam(exams)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
 # -----------------------------------------
 # Storage Routes
@@ -191,6 +227,26 @@ async def get_previous(catalog: dict = Body(...)):
         """
     try:
         return controller.get_previous(catalog)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+    
+
+@app.post("/storage/upload_memoire")
+async def upload_memoire(fichiers: list = Body(...)):
+    """
+        List attendue :
+        [
+            ["IRM", UploadFile],
+            ["IRM", UploadFile],
+            ["MRSI", UploadFile]
+        ]
+        List de list : Chaque fichier en UploadFile avec son type devant
+        Retourne "Success" si tous les fichiers fournis ont bien été mis en mémoire
+        """
+    try:
+        return controller.upload_memoire(fichiers)
     except Exception as e:
         import traceback
         traceback.print_exc()
