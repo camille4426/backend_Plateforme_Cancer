@@ -113,7 +113,7 @@ async def upload_mrsi(
         traceback.print_exc()
         return {"error": str(e)}
 
-@app.get("/spectrum/{name}/{x}/{y}/{z}")
+@app.get("/spectrum/{name:path}/{x}/{y}/{z}")
 async def get_spectrum(
     name : str, x: int, y: int, z: int, 
     current_user: User = Depends(get_current_user)
