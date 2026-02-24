@@ -241,20 +241,22 @@ class Controller:
         ]
         List de list : Chaque fichier en UploadFile avec son type devant
         """
-        logger.debug(f"controller.py (upload_memoire) : Démarrage du traitement d'upload en mémoire")
+        logger.debug(f"controller.py (upload_memoire) : Démarrage du traitement d'upload en mémoire, reçu : {fichiers}")
         
         result = []
 
         for i, element in enumerate(fichiers):
             type = element.get(0)
             fichier = element.get(1)
-            if type != ("IRM" | "MRSI"):
+            if type != ("IRM" or "MRSI"):
                 result.append({"error" : f"Fichier indice {i} : le type donné n'est pas 'IRM' ou 'MRSI' mais : '{type}'"})
-            if isinstance(fichier, UploadFile):
+                continue
+            if not isinstance(fichier, UploadFile):
                 result.append({"error" : f"Fichier indice {i} : le fichier donné n'est pas un UploadFile"})
+                continue
 
             if not self.storage.original_exists(fichier.filename) :
-                if type == "IRM":
+                if type == "IRM" or "MASK":
                     instance = IRM(fichier)
                     self.storage.add_original(fichier.filename, instance)
                 elif type == "MRSI":
@@ -264,7 +266,7 @@ class Controller:
         if not result:
             result.append("Success")
         
-        logger.info(f"controller.py (upload_irm_memoire) : Traitement terminé stockage : {self.storage.info()}")
+        logger.info(f"controller.py (upload_irm_memoire) : Traitement terminé stockage : {result}")
         return result
 
 
@@ -423,4 +425,5 @@ class Controller:
                 except Exception as e:
                     result.append({"error": str(e)})
 
+        logger.debug(f"controller.py : get_prediction_from_exam, fin result: '{result}'")
         return result
