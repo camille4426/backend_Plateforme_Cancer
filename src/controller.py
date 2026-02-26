@@ -231,7 +231,7 @@ class Controller:
             
 
     
-    def upload_memoire(self, fichiers: list):
+    def upload_memoire(self, type : str, fichier: UploadFile):
         """
         List attendue :
         [
@@ -241,32 +241,25 @@ class Controller:
         ]
         List de list : Chaque fichier en UploadFile avec son type devant
         """
-        logger.debug(f"controller.py (upload_memoire) : Démarrage du traitement d'upload en mémoire, reçu : {fichiers}")
+        logger.debug(f"controller.py (upload_memoire) : Démarrage du traitement d'upload en mémoire, type : {type}, reçu : {fichier.filename}")
         
-        result = []
+        result = {}
 
-        for i, element in enumerate(fichiers):
-            type = element.get(0)
-            fichier = element.get(1)
-            if type != ("IRM" or "MRSI"):
-                result.append({"error" : f"Fichier indice {i} : le type donné n'est pas 'IRM' ou 'MRSI' mais : '{type}'"})
-                continue
-            if not isinstance(fichier, UploadFile):
-                result.append({"error" : f"Fichier indice {i} : le fichier donné n'est pas un UploadFile"})
-                continue
+        if type != ("IRM" or "MRSI"):
+            result = {"error" : f"Fichier {fichier} : le type donné n'est pas 'IRM' ou 'MRSI' mais : '{type}'"}
 
-            if not self.storage.original_exists(fichier.filename) :
-                if type == "IRM" or "MASK":
-                    instance = IRM(fichier)
-                    self.storage.add_original(fichier.filename, instance)
-                elif type == "MRSI":
-                    instance = MRSI(fichier.filename, fichier)
-                    self.storage.add_original(fichier.filename, instance)
-
-        if not result:
-            result.append("Success")
+        if not self.storage.original_exists(fichier.filename) :
+            if type == "IRM" or "MASK":
+                instance = IRM(fichier)
+                self.storage.add_original(fichier.filename, instance)
+                result = "Success"
+            elif type == "MRSI":
+                instance = MRSI(fichier.filename, fichier)
+                self.storage.add_original(fichier.filename, instance)
+                result = "Success"
+            
         
-        logger.info(f"controller.py (upload_irm_memoire) : Traitement terminé stockage : {result}")
+        logger.info(f"controller.py (upload_irm_memoire) : Traitement terminé stockage : {fichier.filename}")
         return result
 
 

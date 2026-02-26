@@ -10,7 +10,6 @@ class TEST_PREDICT:
     """
     def __init__(self, noms_fichiers: list):
         self.noms_fichiers = noms_fichiers
-        logger.debug(f"test_predict.py : fichiers : '{noms_fichiers}'")
 
-    def run():
+    def run(self):
         return "TEST_PREDICT pas encore fait, mais si ça retourne ce message -> la structure fonctionne"

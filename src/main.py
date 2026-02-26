@@ -233,20 +233,26 @@ async def get_previous(catalog: dict = Body(...)):
         return {"error": str(e)}
     
 
-@app.post("/storage/upload_memoire")
-async def upload_memoire(fichiers: list = Body(...)):
-    """
-        List attendue :
-        [
-            ["IRM", UploadFile],
-            ["IRM", UploadFile],
-            ["MRSI", UploadFile]
-        ]
-        List de list : Chaque fichier en UploadFile avec son type devant
-        Retourne "Success" si tous les fichiers fournis ont bien été mis en mémoire
-        """
+@app.post("/storage/upload_memoire_irm")
+async def upload_memoire_irm(
+   fichier: UploadFile = File(...),
+   current_user: User = Depends(get_current_user)
+):
     try:
-        return controller.upload_memoire(fichiers)
+        return controller.upload_memoire("IRM",fichier)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+    
+
+@app.post("/storage/upload_memoire_mrsi")
+async def upload_memoire_mrsi(
+   fichier: UploadFile = File(...),
+   current_user: User = Depends(get_current_user)
+):
+    try:
+        return controller.upload_memoire("MRSI",fichier)
     except Exception as e:
         import traceback
         traceback.print_exc()
