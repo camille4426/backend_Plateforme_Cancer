@@ -41,8 +41,18 @@ class MRSI:
         tmp_path = self._save_upload_to_temp()
         try:
             self.img = nib.load(tmp_path)
-            self.data = self.img.get_fdata()
-            logger.info(f"MRSI chargée: shape={self.data.shape}, dtype={self.data.dtype}")
+
+            data = self.img.get_fdata(dtype=np.complex64)
+
+            if not np.iscomplexobj(data):
+                data = np.asanyarray(self.img.dataobj)
+
+            self.data = data
+
+            logger.info(
+                f"MRSI chargée: shape={self.data.shape}, dtype={self.data.dtype}"
+            )
+
         finally:
             try:
                 os.remove(tmp_path)
@@ -145,7 +155,7 @@ class MRSI:
         Renvoie le spectre 1D du voxel (x,y,z).
         """
         return self.spectrum(x, y, z)
-
+"""
     def spectrum(self, x: int, y: int, z: int):
         """
         Renvoie le spectre 1D du voxel (x,y,z) si data est 4D (X,Y,Z,T).
@@ -171,6 +181,39 @@ class MRSI:
             "voxel": {"x": int(x), "y": int(y), "z": int(z)},
             "T": int(T),
             "spectrum": sp.tolist(),
+        }
+        """
+    def spectrum(self, x: int, y: int, z: int):
+
+        if self.data is None:
+            self.load()
+
+        d = self.data
+        X, Y, Z, T = d.shape
+
+        sp = d[int(x), int(y), int(z), :]
+
+        if np.iscomplexobj(sp):
+            real = np.real(sp)
+            imag = np.imag(sp)
+            magnitude = np.abs(sp)
+        else:
+            real = sp
+            imag = np.zeros_like(sp)
+            magnitude = sp
+
+        return {
+            "type": "MRSI",
+            "nom": self.nom,
+            "voxel": {"x": int(x), "y": int(y), "z": int(z)},
+            "T": int(T),
+
+            # 🔹 Backward compatible
+            "spectrum": magnitude.tolist(),
+
+            # 🔹 Proper complex support
+            "real": real.tolist(),
+            "imag": imag.tolist()
         }
         
 
