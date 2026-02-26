@@ -16,6 +16,7 @@ from src.Patients.patient import organize_files_by_patient
 from src.Modele.Traitement.traitement_fft_spatiale import TRAITEMENT_FFT_SPATIALE
 from src.Modele.Traitement.traitement_fft_spectrale import TRAITEMENT_FFT_SPECTRALE
 from src.Modele.Traitement.metabolite_extractor import METABOLITE_EXTRACTOR
+from src.Modele.Traitement.quantification import QUANTIFICATION
 
 from src.Modele.Prediction.test_predict import TEST_PREDICT
 
@@ -24,7 +25,8 @@ logger = get_logger(__name__)  # logger spécifique au module controller.py
 TRAITEMENT_MAP =  { #Liste des traitements disponibles, chaque classe associée doit avoir get_catalog_entry
     "fft_spatiale": TRAITEMENT_FFT_SPATIALE,
     "fft_spectrale": TRAITEMENT_FFT_SPECTRALE,
-    "metabolite_extractor": METABOLITE_EXTRACTOR
+    "metabolite_extractor": METABOLITE_EXTRACTOR,
+    "quantification": QUANTIFICATION
 }
 
 PREDICTION_MAP =  { #Liste des prédictions disponibles à partir d'exams complets fournis
@@ -420,3 +422,10 @@ class Controller:
 
         logger.debug(f"controller.py : get_prediction_from_exam, fin result: '{result}'")
         return result
+
+    def debug_get_last_quantification(self, name: str):
+        if not self.storage.original_exists(name):
+            return {"error": "Original introuvable"}
+
+        data = self.storage.get_traitement(name, "quantification", None)
+        return data
