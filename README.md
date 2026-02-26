@@ -20,7 +20,7 @@ uvicorn src.main:controller.app --reload
 Une fois le serveur lancé, on peut trouver l'interface fastAPI à l'adresse :
  http://127.0.0.1:8000/docs#/
 
- # Requirements après l'ajout de la quantification (depend de fsl qui ne supporte pas les nouvelles versions de ceratines librairies )
+ # Requirements: après l'ajout de la quantification (depend de fsl qui ne supporte pas les nouvelles versions de ceratines librairies )
 
  ``fastapi==0.110.0
 uvicorn==0.29.0
