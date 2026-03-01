@@ -204,8 +204,11 @@ class MRSI:
         if not (0 <= x < X and 0 <= y < Y and 0 <= z < Z):
             return {"error": "Indices voxel hors limites", "shape": [int(X), int(Y), int(Z), int(T)]}
 
-        sp = d[int(x), int(y), int(z), :]
-        # JSON-friendly
+        sp_complex = d[int(x), int(y), int(z), :]
+
+        # Pour affichage uniquement → partie réelle
+        sp = np.real(sp_complex)
+
         return {
             "type": "MRSI",
             "nom": self.nom,

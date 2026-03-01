@@ -46,7 +46,6 @@ class QuantificationTraitement:
                 }
             }
         }
-
     def run(self, x: int, y: int, z: int, method: str = "newton"):
 
         logger.info(f"[QuantificationTraitement] Start voxel=({x},{y},{z}), method={method}")

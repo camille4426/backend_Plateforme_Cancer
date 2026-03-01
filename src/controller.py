@@ -92,6 +92,8 @@ class Controller:
 
     def get_mrsi_spectrum(self, name : str, x: int, y: int, z: int):
         logger.debug("controller.py : Démarrage traitement MRSI spectre")
+        logger.info(f"[Spectrum] Requested name={name}")
+        logger.info(f"[Spectrum] Storage contains={self.storage.get_all_original_names()}")
         if not self.storage.original_exists(name) :
             return {"error": "Aucune MRSI uploadée. Uploadez d'abord /upload-mrsi/."}
 
