@@ -43,12 +43,19 @@ class QuantificationTraitement:
                     "type_param": "choix",
                     "select": ["newton", "mh", "mcmc"],
                     "default": "newton"
+                },
+                "all_voxels": {
+                    "label": "Tous les voxels",
+                    "type": "bool",
+                    "default": False
                 }
             }
         }
-    def run(self, x: int, y: int, z: int, method: str = "newton"):
+    def run(self, x: int = 0, y: int = 0, z: int = 0,
+        method: str = "newton",
+        all_voxels: bool = False):
 
-        logger.info(f"[QuantificationTraitement] Start voxel=({x},{y},{z}), method={method}")
+        logger.info(f"[QuantificationTraitement] Start voxel=({x},{y},{z}), method={method}, all_voxels={all_voxels}")
 
         if self.instance.data is None:
             self.instance.load()
@@ -60,31 +67,10 @@ class QuantificationTraitement:
 
         X, Y, Z, T = d.shape
 
-        if not (0 <= x < X and 0 <= y < Y and 0 <= z < Z):
-            raise ValueError("Indices voxel hors limites")
-
-        spectrum = d[x, y, z, :]
-
-        
-
-        logger.info(f"Spectrum dtype: {spectrum.dtype}")
-        logger.info(f"Spectrum sample: {spectrum[:5]}")
-
-        # Normalize spectrum (important for stable fitting)
-        max_val = np.max(np.abs(spectrum))
-        if max_val > 0:
-            spectrum = spectrum / max_val
-
-            
         dwell_time = float(self.instance.img.header.get_zooms()[3]) \
             if len(self.instance.img.header.get_zooms()) > 3 else 1e-3
 
         logger.debug(f"[QuantificationTraitement] dwell_time={dwell_time}, T={T}")
-
-        if np.iscomplexobj(spectrum):
-            logger.info("Using complex fitting model")
-        else:
-            logger.warning("Spectrum is real — imaginary part unavailable")
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         basis_path = os.path.join(current_dir, "quantification", "basis")
@@ -94,28 +80,105 @@ class QuantificationTraitement:
 
         quantifier = Quantifier(basis_path)
 
+        # ---------------------------------------------------
+        # CAS 1 : VOXEL UNIQUE (comportement actuel)
+        # ---------------------------------------------------
+        if not all_voxels:
 
-        #quantifier = Quantifier(r"C:\Users\souma\Documents\backend_Plateforme_Cancer-main\src\Modele\Traitement\quantification\basis")
+            if not (0 <= x < X and 0 <= y < Y and 0 <= z < Z):
+                raise ValueError("Indices voxel hors limites")
 
-        results = quantifier.quantify(
-            spectrum=spectrum,
-            dwell_time=dwell_time,
-            method=method
-        )
+            spectrum = d[x, y, z, :]
 
-        self.params = {
-            "x": x,
-            "y": y,
-            "z": z,
-            "method": method
-        }
+            logger.info(f"Spectrum dtype: {spectrum.dtype}")
+            logger.info(f"Spectrum sample: {spectrum[:5]}")
 
-        logger.info("[QuantificationTraitement] Success")
+            max_val = np.max(np.abs(spectrum))
+            if max_val > 0:
+                spectrum = spectrum / max_val
 
-        return {
-            "type": "MRSI",
-            "nom": self.instance.nom,   # important pour le frontend
-            "voxel": {"x": x, "y": y, "z": z},
-            "method": method,
-            "quantification": results
-        }
+            if np.iscomplexobj(spectrum):
+                logger.info("Using complex fitting model")
+            else:
+                logger.warning("Spectrum is real — imaginary part unavailable")
+
+            results = quantifier.quantify(
+                spectrum=spectrum,
+                dwell_time=dwell_time,
+                method=method
+            )
+
+            self.params = {
+                "x": x,
+                "y": y,
+                "z": z,
+                "method": method,
+                "all_voxels": False
+            }
+
+            logger.info("[QuantificationTraitement] Success (single voxel)")
+
+            return {
+                "type": "MRSI",
+                "nom": self.instance.nom,
+                "voxel": {"x": x, "y": y, "z": z},
+                "method": method,
+                "quantification": results
+            }
+
+        # ---------------------------------------------------
+        # CAS 2 : TOUS LES VOXELS
+        # ---------------------------------------------------
+        else:
+
+            logger.info("[QuantificationTraitement] Full volume quantification started")
+
+            volume_results = {}
+            total_voxels = X * Y * Z
+            processed = 0
+
+            for i in range(X):
+                for j in range(Y):
+                    for k in range(Z):
+
+                        spectrum = d[i, j, k, :]
+
+                        # Skip voxels presque vides
+                        if np.mean(np.abs(spectrum)) < 1e-6:
+                            continue
+
+                        max_val = np.max(np.abs(spectrum))
+                        if max_val > 0:
+                            spectrum = spectrum / max_val
+
+                        try:
+                            res = quantifier.quantify(
+                                spectrum=spectrum,
+                                dwell_time=dwell_time,
+                                method=method
+                            )
+                            volume_results[f"{i}_{j}_{k}"] = res
+
+                        except Exception as e:
+                            logger.warning(f"Voxel ({i},{j},{k}) failed: {str(e)}")
+
+                        processed += 1
+
+                        if processed % 10 == 0:
+                            logger.info(f"[Quantification] Progress {processed}/{total_voxels}")
+
+            self.params = {
+                "method": method,
+                "all_voxels": True
+            }
+            logger.info(f"[QuantificationTraitement] all_voxels={all_voxels}")
+            logger.info("[QuantificationTraitement] Success (full volume)")
+
+            return {
+                "type": "MRSI_VOLUME",
+                "nom": self.instance.nom,
+                "method": method,
+                "total_voxels": total_voxels,
+                "processed_voxels": len(volume_results),
+                "quantification": volume_results
+            }

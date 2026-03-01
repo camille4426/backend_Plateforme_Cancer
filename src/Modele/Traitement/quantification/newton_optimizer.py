@@ -57,9 +57,9 @@ def run_newton(spectrum, dwell_time, basis_dict):
         method="L-BFGS-B",
         bounds=bounds,
         options={
-            "maxiter": 2000,
-            "ftol": 1e-12,
-            "gtol": 1e-8
+            "maxiter": 3000,
+            "ftol": 1e-9,
+            "gtol": 1e-6
         }
     )
     
