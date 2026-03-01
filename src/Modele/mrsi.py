@@ -36,6 +36,8 @@ class MRSI:
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(self.fichier.file.read())
             return tmp.name
+        
+    """
 
     def load(self):
         tmp_path = self._save_upload_to_temp()
@@ -49,6 +51,45 @@ class MRSI:
             except Exception:
                 pass
 
+    """
+
+    def load(self):
+        tmp_path = self._save_upload_to_temp()
+        try:
+            self.img = nib.load(tmp_path)
+
+            # Read raw data WITHOUT forcing float conversion
+            raw = np.asanyarray(self.img.dataobj)
+
+            logger.info(f"[MRSI] Raw dtype={raw.dtype}, shape={raw.shape}")
+
+            # ---- Case 1: Already complex (ideal case) ----
+            if np.iscomplexobj(raw):
+                self.data = raw
+                logger.info("[MRSI] Complex data detected directly")
+
+            # ---- Case 2: Real/Imag stored in last dimension ----
+            elif raw.ndim == 5 and raw.shape[-1] == 2:
+                logger.info("[MRSI] Reconstructing complex from last dim (real, imag)")
+                real = raw[..., 0]
+                imag = raw[..., 1]
+                self.data = real + 1j * imag
+
+            # ---- Case 3: Pure real MRSI ----
+            else:
+                logger.info("[MRSI] Real-valued data detected")
+                self.data = raw.astype(np.float32)
+
+            logger.info(
+                f"[MRSI] Final dtype={self.data.dtype}, complex={np.iscomplexobj(self.data)}"
+            )
+
+        finally:
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+            
     def _to_uint8_slice(self, sl: np.ndarray) -> np.ndarray:
         """
         Normalise une coupe 2D en uint8 [0..255].

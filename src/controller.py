@@ -16,6 +16,9 @@ from src.Patients.patient import organize_files_by_patient
 from src.Modele.Traitement.traitement_fft_spatiale import TRAITEMENT_FFT_SPATIALE
 from src.Modele.Traitement.traitement_fft_spectrale import TRAITEMENT_FFT_SPECTRALE
 from src.Modele.Traitement.metabolite_extractor import METABOLITE_EXTRACTOR
+from src.Modele.Traitement.quantification.quantifier import Quantifier
+from src.Modele.Traitement.quantification_traitement import QuantificationTraitement
+
 
 from src.Modele.Prediction.test_predict import TEST_PREDICT
 
@@ -24,7 +27,8 @@ logger = get_logger(__name__)  # logger spécifique au module controller.py
 TRAITEMENT_MAP =  { #Liste des traitements disponibles, chaque classe associée doit avoir get_catalog_entry
     "fft_spatiale": TRAITEMENT_FFT_SPATIALE,
     "fft_spectrale": TRAITEMENT_FFT_SPECTRALE,
-    "metabolite_extractor": METABOLITE_EXTRACTOR
+    "metabolite_extractor": METABOLITE_EXTRACTOR,
+    "quantification": QuantificationTraitement
 }
 
 PREDICTION_MAP =  { #Liste des prédictions disponibles à partir d'exams complets fournis
@@ -315,6 +319,8 @@ class Controller:
 
         for name, contenu in catalog.items():
             instance = self.storage.get_original(name) # l'instance du fichier concerné
+            logger.debug(f"[UPLOAD_TRAITEMENTS] Name reçu: {name}")
+            logger.debug(f"[UPLOAD_TRAITEMENTS] Storage contient: {self.storage.get_all_original_names()}")
             
             if instance is None:
                 result[name] = {"error": "IRM/MRSI non trouvée. Placez vous sur l'original ou la version que vous voulez modifier"}
@@ -420,3 +426,43 @@ class Controller:
 
         logger.debug(f"controller.py : get_prediction_from_exam, fin result: '{result}'")
         return result
+    
+
+def quantify_voxel(self, name: str, x: int, y: int, z: int, method: str = "newton"):
+    
+    logger.debug(f"[Quantify] Request name={name}, voxel=({x},{y},{z}), method={method}")
+    
+    if not self.storage.original_exists(name):
+        return {"error": "MRSI non trouvée"}
+    
+    instance = self.storage.get_original(name)
+    
+    if not isinstance(instance, MRSI):
+        return {"error": "Fichier non MRSI"}
+    
+    if instance.data is None:
+        instance.load()
+    
+    spectrum = instance.data[x,y,z,:]
+    
+    try:
+        quantifier = Quantifier("basis_folder_path_here")
+        
+        results = quantifier.quantify(
+            spectrum=spectrum,
+            dwell_time=instance.dwell_time,
+            method=method
+        )
+        
+        logger.info("[Quantify] Success")
+        
+        return {
+            "type": "QUANTIFICATION",
+            "voxel": {"x":x,"y":y,"z":z},
+            "method": method,
+            "metabolites": results
+        }
+    
+    except Exception as e:
+        logger.error(f"[Quantify] Failed: {str(e)}")
+        return {"error": str(e)}
