@@ -45,7 +45,7 @@ class QuantificationTraitement:
                     "default": "newton"
                 },
                 "all_voxels": {
-                    "label": "Tous les voxels",
+                    "label": "Quantification de tous les voxels",
                     "type": "bool",
                     "default": False
                 }
@@ -131,6 +131,7 @@ class QuantificationTraitement:
         # ---------------------------------------------------
         else:
 
+            
             logger.info("[QuantificationTraitement] Full volume quantification started")
 
             volume_results = {}
@@ -178,7 +179,125 @@ class QuantificationTraitement:
                 "type": "MRSI_VOLUME",
                 "nom": self.instance.nom,
                 "method": method,
+                "dimensions": {
+                    "X": int(X),
+                    "Y": int(Y),
+                    "Z": int(Z)
+                },
                 "total_voxels": total_voxels,
                 "processed_voxels": len(volume_results),
                 "quantification": volume_results
             }
+            """
+            logger.info("[QuantificationTraitement] Full volume quantification started")
+
+            volume_results = {}
+            total_voxels = X * Y * Z
+            processed = 0
+
+            # -------------------------
+            # DEBUG CONFIG
+            # -------------------------
+            DEBUG_LIMIT = 30        # <-- set small number for fast debugging (e.g. 10)
+            DEBUG_LOG_FIRST = 5     # log first N voxel results for inspection
+
+            heatmap_metabolites = ["NAA", "Cr", "PCh"]  # metabolites expected by frontend
+            debug_logged = 0
+
+            for i in range(X):
+                for j in range(Y):
+                    for k in range(Z):
+
+                        # ---- DEBUG STOP ----
+                        if DEBUG_LIMIT > 0 and processed >= DEBUG_LIMIT:
+                            logger.info(f"[DEBUG] Early stop at {processed} voxels")
+                            break
+
+                        spectrum = d[i, j, k, :]
+
+                        # Skip almost empty voxels
+                        if np.mean(np.abs(spectrum)) < 1e-6:
+                            continue
+
+                        max_val = np.max(np.abs(spectrum))
+                        if max_val > 0:
+                            spectrum = spectrum / max_val
+
+                        try:
+                            res = quantifier.quantify(
+                                spectrum=spectrum,
+                                dwell_time=dwell_time,
+                                method=method
+                            )
+
+                            # -------------------------
+                            # SANITIZE RESULTS (important for heatmaps)
+                            # -------------------------
+                            clean_res = {}
+                            for met, value in res.items():
+                                try:
+                                    val = float(value)
+                                    if np.isnan(val) or np.isinf(val):
+                                        val = 0.0
+                                    clean_res[met] = val
+                                except Exception:
+                                    clean_res[met] = 0.0
+
+                            volume_results[f"{i}_{j}_{k}"] = clean_res
+
+                            # -------------------------
+                            # DEBUG LOG FIRST VOXELS
+                            # -------------------------
+                            if debug_logged < DEBUG_LOG_FIRST:
+                                logger.info(f"[DEBUG] Voxel ({i},{j},{k}) → {clean_res}")
+                                debug_logged += 1
+
+                        except Exception as e:
+                            logger.warning(f"Voxel ({i},{j},{k}) failed: {str(e)}")
+
+                        processed += 1
+
+                        if processed % 10 == 0:
+                            logger.info(f"[Quantification] Progress {processed}/{total_voxels}")
+
+                    if DEBUG_LIMIT > 0 and processed >= DEBUG_LIMIT:
+                        break
+                if DEBUG_LIMIT > 0 and processed >= DEBUG_LIMIT:
+                    break
+
+
+            # -------------------------
+            # POST LOOP DEBUG SUMMARY
+            # -------------------------
+            logger.info(f"[DEBUG] Total stored voxels: {len(volume_results)}")
+
+            # Inspect one sample voxel for frontend debugging
+            if len(volume_results) > 0:
+                sample_key = next(iter(volume_results))
+                logger.info(f"[DEBUG] Sample voxel key: {sample_key}")
+                logger.info(f"[DEBUG] Sample voxel values: {volume_results[sample_key]}")
+            else:
+                logger.warning("[DEBUG] No voxel results stored!")
+
+            self.params = {
+                "method": method,
+                "all_voxels": True
+            }
+
+            logger.info(f"[QuantificationTraitement] all_voxels={all_voxels}")
+            logger.info("[QuantificationTraitement] Success (full volume)")
+
+            return {
+                "type": "MRSI_VOLUME",
+                "nom": self.instance.nom,
+                "method": method,
+                "dimensions": {
+                    "X": int(X),
+                    "Y": int(Y),
+                    "Z": int(Z)
+                },
+                "total_voxels": total_voxels,
+                "processed_voxels": len(volume_results),
+                "quantification": volume_results
+            }
+            """
